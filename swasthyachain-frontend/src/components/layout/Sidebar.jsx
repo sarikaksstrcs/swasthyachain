@@ -52,7 +52,7 @@ export const LoginForm = () => {
         required
       />
 
-      <Button type="submit" className="w-full" loading={loading}>
+      <Button type="submit" className="w-full bg-blue-500" loading={loading}>
         Login
       </Button>
 

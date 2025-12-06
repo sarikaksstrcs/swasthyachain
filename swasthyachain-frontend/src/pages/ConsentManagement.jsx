@@ -30,7 +30,7 @@ export const ConsentManagement = () => {
           </p>
         </div>
         {isDoctor && (
-          <Button onClick={() => setShowRequest(true)}>
+          <Button onClick={() => setShowRequest(true)} variant='primary' className='bg-vlue-500'>
             <Plus className="h-5 w-5" />
             Request Consent
           </Button>
