@@ -78,21 +78,33 @@ export const RegisterForm = () => {
       />
 
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Role
-        </label>
-        <select
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          className="input-field"
-          required
-        >
-          <option value={ROLES.PATIENT}>Patient</option>
-          <option value={ROLES.DOCTOR}>Doctor</option>
-          <option value={ROLES.HOSPITAL}>Hospital</option>
-        </select>
-      </div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Role
+  </label>
+
+  <select
+    name="role"
+    value={formData.role}
+    onChange={handleChange}
+    className="
+      w-full
+      text-black
+      bg-white
+      border border-gray-700
+      rounded-lg
+      px-3 py-2
+      focus:outline-none
+      focus:ring-2
+      focus:ring-blue-500
+    "
+    required
+  >
+    <option value={ROLES.PATIENT}>Patient</option>
+    <option value={ROLES.DOCTOR}>Doctor</option>
+    <option value={ROLES.HOSPITAL}>Hospital</option>
+  </select>
+</div>
+
 
       <Input
         label="Password"

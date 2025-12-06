@@ -19,13 +19,14 @@ export const Input = ({
             <Icon className="h-5 w-5 text-gray-400" />
           </div>
         )}
-        <input
-          type={type}
-          className={`input-field ${Icon ? 'pl-10' : ''} ${
-            error ? 'border-red-500 focus:ring-red-500' : ''
-          }`}
-          {...props}
-        />
+       <input
+  type={type}
+  className={`input-field w-full text-black border-gray-800 ${Icon ? 'pl-10' : ''} ${
+    error ? 'border-red-500 focus:ring-red-500' : 'border-gray-600'
+  }`}
+  {...props}
+/>
+
       </div>
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>

@@ -39,7 +39,7 @@ export const Dashboard = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <h1 className="text-3xl font-bold text-white mb-2">
           Welcome back, {user?.full_name}!
         </h1>
         <p className="text-gray-600">
@@ -85,23 +85,23 @@ export const Dashboard = () => {
         <Card title="Recent Activity">
           <div className="space-y-4">
             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-              <Activity className="h-5 w-5 text-primary-600" />
+              <Activity className="h-5 w-5 text-blue-500" />
               <div>
-                <p className="font-medium">Blood Test Results Uploaded</p>
+                <p className="font-medium text-black">Blood Test Results Uploaded</p>
                 <p className="text-sm text-gray-600">2 hours ago</p>
               </div>
             </div>
             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
               <Shield className="h-5 w-5 text-green-600" />
               <div>
-                <p className="font-medium">Consent Approved for Dr. Smith</p>
+                <p className="font-medium text-black">Consent Approved for Dr. Smith</p>
                 <p className="text-sm text-gray-600">1 day ago</p>
               </div>
             </div>
             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
               <Brain className="h-5 w-5 text-purple-600" />
               <div>
-                <p className="font-medium">New AI Health Insights Available</p>
+                <p className="font-medium text-black">New AI Health Insights Available</p>
                 <p className="text-sm text-gray-600">3 days ago</p>
               </div>
             </div>
