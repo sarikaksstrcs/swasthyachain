@@ -19,6 +19,8 @@ async def upload_medical_record(
     record_type: str = Form(...),
     title: str = Form(...),
     description: Optional[str] = Form(None),
+    doctor_id: Optional[str] = Form(None),  # Add this
+    hospital_id: Optional[str] = Form(None),  # Add this
     current_user: dict = Depends(get_current_active_user)
 ):
     """Upload a new medical record with file"""
@@ -69,6 +71,8 @@ async def upload_medical_record(
         "title": title,
         "description": description or "",
         "patient_id": str(current_user["_id"]),
+        "doctor_id": doctor_id or "",  # Add with default
+        "hospital_id": hospital_id or "",
         "ipfs_hash": ipfs_result["ipfs_hash"],
         "encryption_iv": encrypted["iv"],
         "record_hash": record_hash,

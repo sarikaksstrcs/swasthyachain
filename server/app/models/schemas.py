@@ -71,16 +71,23 @@ class MedicalRecordCreate(BaseModel):
 class MedicalRecordResponse(BaseModel):
     id: str
     patient_id: str
-    record_type: RecordType
+    record_type: str  # Changed from RecordType enum to str
     title: str
-    description: Optional[str]
+    description: Optional[str] = None
     ipfs_hash: str
     blockchain_hash: str
     encrypted: bool
-    doctor_id: Optional[str]
-    hospital_id: Optional[str]
+    doctor_id: Optional[str] = None
+    hospital_id: Optional[str] = None
+    filename: Optional[str] = None  # Add this if it's in DB
+    file_size: Optional[int] = None  # Add this if it's in DB
+    record_hash: Optional[str] = None  # Add this if it's in DB
+    encryption_iv: Optional[str] = None  # Add this if it's in DB
     created_at: datetime
     updated_at: datetime
+    
+    class Config:
+        from_attributes = True
 
 # Consent Models
 class ConsentRequest(BaseModel):
