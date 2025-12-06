@@ -1,7 +1,6 @@
-
-from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File
-from typing import List
-from app.models.schemas import MedicalRecordCreate, MedicalRecordResponse, UserRole
+from fastapi import APIRouter, HTTPException, status, Depends, UploadFile, File, Form
+from typing import List, Optional
+from app.models.schemas import MedicalRecordResponse, UserRole
 from app.core.security import get_current_active_user, require_role
 from app.core.database import get_database
 from app.services.encryption import encryption_service
@@ -9,14 +8,17 @@ from app.services.ipfs import ipfs_service
 from app.services.blockchain import blockchain_service
 from datetime import datetime
 from bson import ObjectId
+from pymongo.errors import DuplicateKeyError
 import hashlib
 
 router = APIRouter()
 
 @router.post("/upload", response_model=MedicalRecordResponse, status_code=status.HTTP_201_CREATED)
 async def upload_medical_record(
-    record: MedicalRecordCreate,
     file: UploadFile = File(...),
+    record_type: str = Form(...),
+    title: str = Form(...),
+    description: Optional[str] = Form(None),
     current_user: dict = Depends(get_current_active_user)
 ):
     """Upload a new medical record with file"""
@@ -24,6 +26,21 @@ async def upload_medical_record(
     
     # Read file content
     file_content = await file.read()
+    
+    # Calculate record hash first
+    record_hash = hashlib.sha256(file_content).hexdigest()
+    
+    # Check if this exact file already exists for this user
+    existing_record = await db.medical_records.find_one({
+        "patient_id": str(current_user["_id"]),
+        "record_hash": record_hash
+    })
+    
+    if existing_record:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This file has already been uploaded. Duplicate files are not allowed."
+        )
     
     # Encrypt file
     encrypted = encryption_service.encrypt_file(file_content)
@@ -34,24 +51,23 @@ async def upload_medical_record(
         file.filename
     )
     
-    # Calculate record hash
-    record_hash = hashlib.sha256(file_content).hexdigest()
-    
     # Record on blockchain
     blockchain_tx = await blockchain_service.record_medical_data(
         patient_id=str(current_user["_id"]),
         record_hash=record_hash,
         ipfs_hash=ipfs_result["ipfs_hash"],
         metadata={
-            "record_type": record.record_type,
-            "title": record.title,
+            "record_type": record_type,
+            "title": title,
             "filename": file.filename
         }
     )
     
     # Save to database
-    record_dict = record.dict()
-    record_dict.update({
+    record_dict = {
+        "record_type": record_type,
+        "title": title,
+        "description": description or "",
         "patient_id": str(current_user["_id"]),
         "ipfs_hash": ipfs_result["ipfs_hash"],
         "encryption_iv": encrypted["iv"],
@@ -62,14 +78,19 @@ async def upload_medical_record(
         "file_size": len(file_content),
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow()
-    })
+    }
     
-    result = await db.medical_records.insert_one(record_dict)
-    
-    created_record = await db.medical_records.find_one({"_id": result.inserted_id})
-    created_record["id"] = str(created_record.pop("_id"))
-    
-    return MedicalRecordResponse(**created_record)
+    try:
+        result = await db.medical_records.insert_one(record_dict)
+        created_record = await db.medical_records.find_one({"_id": result.inserted_id})
+        created_record["id"] = str(created_record.pop("_id"))
+        return MedicalRecordResponse(**created_record)
+    except DuplicateKeyError:
+        # This shouldn't happen due to the check above, but handle it anyway
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This file has already been uploaded."
+        )
 
 @router.get("/my-records", response_model=List[MedicalRecordResponse])
 async def get_my_records(current_user: dict = Depends(get_current_active_user)):
@@ -77,7 +98,10 @@ async def get_my_records(current_user: dict = Depends(get_current_active_user)):
     db = await get_database()
     
     records = []
-    cursor = db.medical_records.find({"patient_id": str(current_user["_id"])})
+    cursor = db.medical_records.find({
+        "patient_id": str(current_user["_id"]),
+        "deleted": {"$ne": True}  # Exclude soft-deleted records
+    }).sort("created_at", -1)
     
     async for record in cursor:
         record["id"] = str(record.pop("_id"))
