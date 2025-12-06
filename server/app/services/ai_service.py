@@ -4,12 +4,14 @@ from app.core.config import settings
 from typing import Dict, List
 import json
 
+
 class AIService:
     """
     AI Service using Google Gemini for health insights
     """
     
     def __init__(self):
+        print("Initializing AI Service with Gemini model",settings.GEMINI_API_KEY)
         if settings.GEMINI_API_KEY:
             genai.configure(api_key=settings.GEMINI_API_KEY)
             self.model = genai.GenerativeModel(settings.GEMINI_MODEL)
@@ -20,12 +22,14 @@ class AIService:
         """
         Summarize patient's medical history using AI
         """
+        print("Initializing AI Service with Gemini model",settings.GEMINI_API_KEY)
         if not self.model:
             return {"error": "Gemini API key not configured"}
         
         try:
             # Prepare medical data
             records_text = self._format_records_for_ai(medical_records)
+            print("Medical Records for AI:\n", records_text)
             
             prompt = f"""
             You are a medical AI assistant. Analyze the following patient medical records and provide:
@@ -42,11 +46,13 @@ class AIService:
             """
             
             response = self.model.generate_content(prompt)
+            print("AI Response:\n", response.text)
             result = self._parse_ai_response(response.text)
             
             return result
             
         except Exception as e:
+            print("AI Summarization Error:", str(e))
             return {"error": f"AI summarization failed: {str(e)}"}
     
     async def predict_disease_risk(self, patient_data: Dict) -> Dict:

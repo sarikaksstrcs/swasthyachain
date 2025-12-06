@@ -44,6 +44,8 @@ async def get_health_summary(
             detail="No medical records found"
         )
     
+    print(f"Generating health summary for patient {request.patient_id} with {len(records)} records")
+    
     # Generate summary using AI
     result = await ai_service.summarize_medical_history(records)
     
