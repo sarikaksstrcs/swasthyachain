@@ -21,22 +21,37 @@ async def request_consent(
     """Doctor requests consent from patient"""
     db = await get_database()
     
-    # Verify doctor exists
-    doctor = await db.users.find_one({"_id": ObjectId(consent_req.doctor_id)})
-    if not doctor or doctor["role"] != UserRole.DOCTOR:
+    # Verify doctor exists and matches current user
+    if str(current_user["_id"]) != consent_req.doctor_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Doctor ID must match authenticated user"
+        )
+    
+    # Find patient by email
+    patient = await db.users.find_one({"email": consent_req.patient_email})
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found with this email"
+        )
+    
+    if patient["role"] != UserRole.PATIENT:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid doctor ID"
+            detail="Email does not belong to a patient"
         )
     
     # Create consent request
     consent_dict = consent_req.dict()
     consent_dict.update({
-        "patient_id": str(current_user["_id"]),
+        "patient_id": str(patient["_id"]),  # Use found patient's ID
         "status": ConsentStatus.PENDING,
         "blockchain_tx_id": "",
         "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "updated_at": datetime.utcnow(),
+        "granted_at": None,  # Set to None initially
+        "expires_at": None   # Set to None initially
     })
     
     result = await db.consent_logs.insert_one(consent_dict)

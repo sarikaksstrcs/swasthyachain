@@ -3,9 +3,11 @@ import { consentService } from '@/services/consent.service';
 import { Button } from '@/components/common/Button';
 import { Input } from '@/components/common/Input';
 import { ACCESS_TYPES } from '@/utils/constants';
+import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 
 export const ConsentRequest = ({ onSuccess, onCancel }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     patient_email: '',
     access_type: ACCESS_TYPES.READ,
@@ -23,7 +25,13 @@ export const ConsentRequest = ({ onSuccess, onCancel }) => {
     setLoading(true);
     
     try {
-      await consentService.requestConsent(formData);
+      // Include doctor_id from authenticated user
+      const requestData = {
+        ...formData,
+        doctor_id: user.id, // or user.user_id depending on your auth structure
+      };
+      
+      await consentService.requestConsent(requestData);
       toast.success('Consent request sent successfully!');
       onSuccess();
     } catch (error) {
@@ -54,7 +62,7 @@ export const ConsentRequest = ({ onSuccess, onCancel }) => {
           name="access_type"
           value={formData.access_type}
           onChange={handleChange}
-          className="input-field"
+          className="input-field w-full"
           required
         >
           <option value={ACCESS_TYPES.READ}>Read Only</option>
@@ -83,14 +91,14 @@ export const ConsentRequest = ({ onSuccess, onCancel }) => {
           value={formData.reason}
           onChange={handleChange}
           rows={4}
-          className="input-field"
+          className="input-field w-full"
           placeholder="Explain why you need access to this patient's records..."
           required
         />
       </div>
 
       <div className="flex gap-3">
-        <Button type="submit" className="flex-1" loading={loading}>
+        <Button type="submit" variant="primary" className="flex-1" loading={loading}>
           Send Request
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel}>

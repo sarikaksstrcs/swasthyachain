@@ -1,6 +1,4 @@
-// =============================================
-// src/components/common/Button.jsx
-// =============================================
+
 export const Button = ({ 
   children, 
   variant = 'primary', 

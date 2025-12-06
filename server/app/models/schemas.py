@@ -85,27 +85,39 @@ class MedicalRecordResponse(BaseModel):
 # Consent Models
 class ConsentRequest(BaseModel):
     doctor_id: str
-    record_ids: Optional[List[str]] = None  # None = all records
-    access_type: AccessType = AccessType.READ
-    duration_hours: int = 24
+    patient_email: str
+    access_type: AccessType
+    duration_hours: int = Field(ge=1, le=720)
     reason: str
+    record_ids: Optional[List[str]] = None
+
 
 class ConsentResponse(BaseModel):
     id: str
-    patient_id: str
     doctor_id: str
-    record_ids: Optional[List[str]]
+    patient_id: str
+    patient_email: Optional[str] = None
     access_type: AccessType
-    status: ConsentStatus
+    duration_hours: int
     reason: str
-    granted_at: Optional[datetime]
-    expires_at: Optional[datetime]
+    record_ids: Optional[List[str]] = None
+    status: ConsentStatus
     blockchain_tx_id: str
     created_at: datetime
+    updated_at: datetime
+    # Make these optional since they're only set when approved
+    granted_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 class ConsentUpdate(BaseModel):
-    status: ConsentStatus
-    
+    status: Optional[ConsentStatus] = None
+    granted_at: Optional[datetime] = None
+    expires_at: Optional[datetime] = None
+    blockchain_tx_id: Optional[str] = None
+
 # Access Log Models
 class AccessLogResponse(BaseModel):
     id: str
