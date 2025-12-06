@@ -10,7 +10,7 @@ export const Footer = () => {
               <Activity className="h-6 w-6 text-primary-400" />
               <span className="text-xl font-bold text-white">SwasthyaChain</span>
             </div>
-            <p className="text-sm">
+            <p className="text-sm text-gray-400 tex">
               Blockchain-powered decentralized health management system for secure,
               transparent, and patient-controlled healthcare.
             </p>
