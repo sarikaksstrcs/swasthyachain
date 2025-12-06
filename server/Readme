@@ -1,0 +1,388 @@
+# SwasthyaChain Backend
+
+A comprehensive FastAPI backend for SwasthyaChain - Blockchain, Cloud, and AI-Enabled Decentralized Health Management System.
+
+## 📁 Complete File Structure
+
+```
+swasthyachain-backend/
+│
+├── app/
+│   ├── __init__.py
+│   ├── main.py                    # Main FastAPI application
+│   │
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── config.py              # Configuration settings
+│   │   ├── database.py            # MongoDB connection
+│   │   └── security.py            # Authentication & JWT
+│   │
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── schemas.py             # Pydantic models
+│   │
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── encryption.py          # AES-256 encryption
+│   │   ├── blockchain.py          # Blockchain service
+│   │   ├── ipfs.py                # IPFS storage
+│   │   └── ai_service.py          # Gemini AI integration
+│   │
+│   └── api/
+│       ├── __init__.py
+│       └── v1/
+│           ├── __init__.py
+│           ├── router.py          # Main API router
+│           └── endpoints/
+│               ├── __init__.py
+│               ├── auth.py        # Authentication endpoints
+│               ├── medical_records.py  # Medical records
+│               ├── consent.py     # Consent management
+│               └── ai.py          # AI endpoints
+│
+├── .env                           # Environment variables
+├── .env.example                   # Example env file
+├── requirements.txt               # Python dependencies
+├── README.md                      # This file
+└── run.py                         # Entry point script
+```
+
+## 🚀 Setup Instructions
+
+### 1. Prerequisites
+
+- Python 3.9+
+- MongoDB (local or Atlas)
+- (Optional) IPFS node
+- (Optional) Google Gemini API key
+
+### 2. Installation Steps
+
+#### Step 1: Clone and Navigate
+```bash
+mkdir swasthyachain-backend
+cd swasthyachain-backend
+```
+
+#### Step 2: Create Virtual Environment
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# Linux/Mac
+python3 -m venv venv
+source venv/bin/activate
+```
+
+#### Step 3: Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+#### Step 4: Setup MongoDB
+
+**Option A: Local MongoDB**
+```bash
+# Install MongoDB Community Edition
+# Start MongoDB service
+mongod --dbpath ./data/db
+```
+
+**Option B: MongoDB Atlas (Cloud)**
+1. Create account at mongodb.com/cloud/atlas
+2. Create a cluster
+3. Get connection string
+4. Update MONGODB_URL in .env
+
+#### Step 5: Configure Environment Variables
+```bash
+# Copy example env file
+cp .env.example .env
+
+# Generate SECRET_KEY
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+
+# Generate ENCRYPTION_KEY
+python -c "import os, base64; print(base64.b64encode(os.urandom(32)).decode())"
+
+# Edit .env and add:
+# - SECRET_KEY (generated above)
+# - ENCRYPTION_KEY (generated above)
+# - MONGODB_URL (your MongoDB connection)
+# - GEMINI_API_KEY (optional, from Google AI Studio)
+```
+
+#### Step 6: Create Directory Structure
+```bash
+# Create all directories
+mkdir -p app/core app/models app/services app/api/v1/endpoints
+
+# Create __init__.py files
+touch app/__init__.py
+touch app/core/__init__.py
+touch app/models/__init__.py
+touch app/services/__init__.py
+touch app/api/__init__.py
+touch app/api/v1/__init__.py
+touch app/api/v1/endpoints/__init__.py
+```
+
+#### Step 7: Add All Code Files
+Copy all the provided code into their respective files as per the structure above.
+
+#### Step 8: Create Entry Point
+```python
+# run.py
+import uvicorn
+
+if __name__ == "__main__":
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True
+    )
+```
+
+### 3. Running the Application
+
+```bash
+# Method 1: Using uvicorn directly
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Method 2: Using run.py
+python run.py
+
+# Method 3: Using the module
+python -m uvicorn app.main:app --reload
+```
+
+The API will be available at:
+- **API**: http://localhost:8000
+- **Docs**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+
+## 📚 API Endpoints
+
+### Authentication
+- `POST /api/v1/auth/register` - Register new user
+- `POST /api/v1/auth/login` - Login user
+- `GET /api/v1/auth/me` - Get current user info
+
+### Medical Records
+- `POST /api/v1/records/upload` - Upload medical record
+- `GET /api/v1/records/my-records` - Get all records
+- `GET /api/v1/records/{record_id}` - Get specific record
+- `DELETE /api/v1/records/{record_id}` - Delete record
+
+### Consent Management
+- `POST /api/v1/consent/request` - Request consent
+- `GET /api/v1/consent/pending` - Get pending consents
+- `PUT /api/v1/consent/{id}/approve` - Approve consent
+- `PUT /api/v1/consent/{id}/deny` - Deny consent
+- `DELETE /api/v1/consent/{id}/revoke` - Revoke consent
+- `GET /api/v1/consent/my-consents` - Get all consents
+
+### AI Services
+- `POST /api/v1/ai/summarize` - Get health summary
+- `POST /api/v1/ai/predict` - Predict health risks
+- `GET /api/v1/ai/recommendations` - Get recommendations
+
+## 🧪 Testing the API
+
+### Using cURL
+
+#### 1. Register a Patient
+```bash
+curl -X POST "http://localhost:8000/api/v1/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "patient@example.com",
+    "password": "secure123",
+    "full_name": "John Doe",
+    "role": "patient",
+    "phone": "+919876543210"
+  }'
+```
+
+#### 2. Login
+```bash
+curl -X POST "http://localhost:8000/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "patient@example.com",
+    "password": "secure123"
+  }'
+```
+
+Save the `access_token` from response.
+
+#### 3. Upload Medical Record
+```bash
+curl -X POST "http://localhost:8000/api/v1/records/upload" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -F "file=@/path/to/medical_report.pdf" \
+  -F 'record={"record_type": "lab_report", "title": "Blood Test", "description": "Annual checkup"}'
+```
+
+### Using Python Requests
+```python
+import requests
+
+BASE_URL = "http://localhost:8000/api/v1"
+
+# Register
+response = requests.post(f"{BASE_URL}/auth/register", json={
+    "email": "patient@example.com",
+    "password": "secure123",
+    "full_name": "John Doe",
+    "role": "patient"
+})
+print(response.json())
+
+# Login
+response = requests.post(f"{BASE_URL}/auth/login", json={
+    "email": "patient@example.com",
+    "password": "secure123"
+})
+token = response.json()["access_token"]
+
+# Get records
+headers = {"Authorization": f"Bearer {token}"}
+response = requests.get(f"{BASE_URL}/records/my-records", headers=headers)
+print(response.json())
+```
+
+## 🔒 Security Features
+
+1. **AES-256 Encryption** - All medical files encrypted
+2. **JWT Authentication** - Secure token-based auth
+3. **Role-Based Access Control (RBAC)** - Patient, Doctor, Hospital roles
+4. **Blockchain Logging** - Immutable audit trail
+5. **Consent Management** - Patient-controlled access
+6. **Password Hashing** - Bcrypt with salt
+
+## 🔧 Configuration Options
+
+### MongoDB Settings
+```python
+MONGODB_URL = "mongodb://localhost:27017"  # Local
+MONGODB_URL = "mongodb+srv://user:pass@cluster.mongodb.net"  # Atlas
+DATABASE_NAME = "swasthyachain"
+```
+
+### IPFS Settings (Optional)
+```python
+IPFS_API_URL = "http://localhost:5001"
+IPFS_GATEWAY_URL = "http://localhost:8080"
+```
+
+### AI Settings
+```python
+GEMINI_API_KEY = "your-api-key"  # Get from Google AI Studio
+GEMINI_MODEL = "gemini-pro"
+```
+
+## 📦 Production Deployment
+
+### Using Docker
+```dockerfile
+# Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+### Using Docker Compose
+```yaml
+# docker-compose.yml
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGODB_URL=mongodb://mongo:27017
+    depends_on:
+      - mongo
+  
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
+```
+
+Run with:
+```bash
+docker-compose up -d
+```
+
+## 🐛 Troubleshooting
+
+### MongoDB Connection Issues
+```bash
+# Check if MongoDB is running
+mongosh
+
+# If connection fails, start MongoDB
+mongod --dbpath ./data/db
+```
+
+### Import Errors
+```bash
+# Make sure you're in the project root
+cd swasthyachain-backend
+
+# Reinstall dependencies
+pip install -r requirements.txt
+```
+
+### Port Already in Use
+```bash
+# Change port in run.py or use:
+uvicorn app.main:app --port 8001
+```
+
+## 📖 Additional Resources
+
+- FastAPI Docs: https://fastapi.tiangolo.com
+- MongoDB Docs: https://docs.mongodb.com
+- Google Gemini: https://ai.google.dev
+- IPFS Docs: https://docs.ipfs.io
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch
+3. Commit changes
+4. Push to branch
+5. Create Pull Request
+
+## 📄 License
+
+MIT License - See LICENSE file
+
+## 👥 Support
+
+For issues and questions:
+- Create GitHub issue
+- Email: support@swasthyachain.com
+
+---
+
+**Built with ❤️ for better healthcare**
