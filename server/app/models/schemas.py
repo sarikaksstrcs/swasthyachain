@@ -1,7 +1,7 @@
 # app/models/schemas.py
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Dict
-from datetime import datetime
+from datetime import datetime,date, time
 from enum import Enum
 
 # Enums
@@ -157,3 +157,63 @@ class PredictionResponse(BaseModel):
     result: Dict
     confidence: float
     recommendations: List[str]
+# Add these to app/models/schemas.py
+
+
+
+class AppointmentStatus(str, Enum):
+    SCHEDULED = "scheduled"
+    CONFIRMED = "confirmed"
+    CANCELLED = "cancelled"
+    COMPLETED = "completed"
+    NO_SHOW = "no_show"
+
+# Doctor Availability Models
+class DoctorAvailabilityCreate(BaseModel):
+    date: date
+    start_time: time
+    end_time: time
+    is_available: bool = True
+
+class DoctorAvailabilityResponse(BaseModel):
+    id: str
+    doctor_id: str
+    date: date
+    start_time: time
+    end_time: time
+    is_available: bool
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+# Appointment Models
+class AppointmentCreate(BaseModel):
+    doctor_id: str
+    slot_id: str
+    reason: str
+    notes: Optional[str] = None
+
+class AppointmentResponse(BaseModel):
+    id: str
+    patient_id: str
+    patient_name: str
+    doctor_id: str
+    doctor_name: str
+    slot_id: str
+    appointment_date: date
+    start_time: time
+    end_time: time
+    reason: str
+    notes: Optional[str] = None
+    status: AppointmentStatus
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+class AppointmentUpdate(BaseModel):
+    status: Optional[AppointmentStatus] = None
+    notes: Optional[str] = None

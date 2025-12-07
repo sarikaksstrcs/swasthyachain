@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, medical_records, consent, ai
+from app.api.v1.endpoints import auth, medical_records, consent, appoinments, ai
 
 api_router = APIRouter()
 
@@ -25,4 +25,9 @@ api_router.include_router(
     ai.router,
     prefix="/ai",
     tags=["AI Services"]
+)
+api_router.include_router(
+    appoinments.router,
+    prefix="/appointments",
+    tags=["appointments"]
 )
