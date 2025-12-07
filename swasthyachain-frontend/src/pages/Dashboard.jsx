@@ -1,32 +1,83 @@
+import { useState, useEffect } from 'react';
 import { FileText, Shield, Brain, Activity, Calendar, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { Card } from '../components/common/Card';
 
+import toast from 'react-hot-toast';
+import { appointmentService } from '../services/appoinment.service';
+
 export const Dashboard = () => {
   const { user } = useAuth();
+  const [todayAppointments, setTodayAppointments] = useState([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+ 
 
-  // Different stats based on user role
+  useEffect(() => {
+    if (user) {
+      fetchAppointments();
+    }
+  }, [user]);
+
+  const fetchAppointments = async () => {
+    setLoading(true);
+    try {
+      const appointments = await appointmentService.getMyAppointments();
+      
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      
+      // Filter today's appointments
+      const todayApts = appointments.filter(apt => {
+          const aptDate = typeof apt.appointment_date === 'string' 
+          ? apt.appointment_date 
+          : apt.appointment_date.toISOString().split('T')[0];
+          return aptDate === todayStr && ['scheduled', 'confirmed'].includes(apt.status);
+        });
+        
+        // Filter upcoming appointments (next 7 days, excluding today)
+        const nextWeek = new Date(today);
+        nextWeek.setDate(today.getDate() + 7);
+        
+        const upcomingApts = appointments.filter(apt => {
+            const aptDate = typeof apt.appointment_date === 'string'
+            ? new Date(apt.appointment_date)
+            : apt.appointment_date;
+            return aptDate > today && aptDate <= nextWeek && ['scheduled', 'confirmed'].includes(apt.status);
+      });
+      
+      setTodayAppointments(todayApts);
+      setUpcomingAppointments(upcomingApts.slice(0, 2)); // Only show next 2
+    } catch (error) {
+      console.error('Failed to fetch appointments:', error);
+      toast.error('Failed to load appointments');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Stats based on real data
   const stats = user?.role === 'doctor' 
     ? [
         {
           icon: Calendar,
           label: 'Today\'s Appointments',
-          value: '8',
+          value: loading ? '...' : todayAppointments.length.toString(),
           color: 'bg-blue-100 text-blue-600',
           link: '/appointments',
         },
         {
           icon: FileText,
           label: 'Patient Records',
-          value: '45',
+          value: '45', // This would come from records API
           color: 'bg-green-100 text-green-600',
           link: '/medical-records',
         },
         {
           icon: Shield,
           label: 'Active Consents',
-          value: '12',
+          value: '12', // This would come from consent API
           color: 'bg-purple-100 text-purple-600',
           link: '/consent-management',
         },
@@ -35,14 +86,14 @@ export const Dashboard = () => {
         {
           icon: FileText,
           label: 'Medical Records',
-          value: '12',
+          value: '12', // This would come from records API
           color: 'bg-blue-100 text-blue-600',
           link: '/medical-records',
         },
         {
           icon: Calendar,
           label: 'Upcoming Appointments',
-          value: '2',
+          value: loading ? '...' : upcomingAppointments.length+todayAppointments.length,
           color: 'bg-green-100 text-green-600',
           link: '/appointments',
         },
@@ -63,7 +114,7 @@ export const Dashboard = () => {
       ]
     : [
         { title: 'Book Appointment', link: '/appointments', icon: Calendar },
-        { title: 'Upload Record', link: '/medical-records', icon: FileText },
+        { title: 'Upload Record', link: '/medical-records/upload', icon: FileText },
         { title: 'View AI Insights', link: '/ai-insights', icon: Brain },
       ];
 
@@ -165,54 +216,96 @@ export const Dashboard = () => {
       {user?.role === 'patient' && (
         <div className="mt-8">
           <Card title="Upcoming Appointments">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <Calendar className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Dr. Sarah Smith</p>
-                    <p className="text-sm text-gray-600">Cardiology Checkup</p>
-                    <p className="text-sm text-blue-600 font-medium mt-1">
-                      Dec 10, 2025 at 10:00 AM
-                    </p>
-                  </div>
-                </div>
-                <Link 
-                  to="/appointments" 
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                >
-                  View Details
-                </Link>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
               </div>
-              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <Calendar className="h-6 w-6 text-green-600" />
+            ) : (
+              <div className="space-y-4">
+                {upcomingAppointments.length === 0 || todayAppointments.length===0? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500 mb-4">No upcoming appointments</p>
+                    <Link 
+                      to="/appointments/book" 
+                      className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      Book Your First Appointment
+                    </Link>
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">Dr. John Doe</p>
-                    <p className="text-sm text-gray-600">Follow-up Consultation</p>
-                    <p className="text-sm text-green-600 font-medium mt-1">
-                      Dec 15, 2025 at 2:30 PM
-                    </p>
-                  </div>
-                </div>
-                <Link 
-                  to="/appointments" 
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
-                >
-                  View Details
-                </Link>
+                ) : (
+                  <>
+                  {todayAppointments.map((appointment, index) => {
+                      const colors = ['blue', 'green', 'purple'];
+                      const color = colors[index % colors.length];
+                      
+                      return (
+                        <div 
+                          key={appointment.id} 
+                          className={`flex items-center justify-between p-4 bg-${color}-50 rounded-lg border border-${color}-200`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 bg-${color}-100 rounded-full flex items-center justify-center`}>
+                              <Calendar className={`h-6 w-6 text-${color}-600`} />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900">{appointment.doctor_name}</p>
+                              <p className="text-sm text-gray-600">{appointment.reason}</p>
+                              <p className={`text-sm text-${color}-600 font-medium mt-1`}>
+                                {appointmentService.formatDateLong(appointment.appointment_date)} at {appointmentService.formatTime(appointment.start_time)}
+                              </p>
+                            </div>
+                          </div>
+                          <Link 
+                            to="/appointments" 
+                            className={`px-4 py-2 bg-${color}-600 text-white rounded-lg hover:bg-${color}-700 transition-colors text-sm font-medium`}
+                          >
+                            View Details
+                          </Link>
+                        </div>
+                      );
+                    })}
+                    
+                    {upcomingAppointments.map((appointment, index) => {
+                      const colors = ['blue', 'green', 'purple'];
+                      const color = colors[index % colors.length];
+                      
+                      return (
+                        <div 
+                          key={appointment.id} 
+                          className={`flex items-center justify-between p-4 bg-${color}-50 rounded-lg border border-${color}-200`}
+                        >
+                          <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 bg-${color}-100 rounded-full flex items-center justify-center`}>
+                              <Calendar className={`h-6 w-6 text-${color}-600`} />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900">{appointment.doctor_name}</p>
+                              <p className="text-sm text-gray-600">{appointment.reason}</p>
+                              <p className={`text-sm text-${color}-600 font-medium mt-1`}>
+                                {appointmentService.formatDateLong(appointment.appointment_date)} at {appointmentService.formatTime(appointment.start_time)}
+                              </p>
+                            </div>
+                          </div>
+                          <Link 
+                            to="/appointments" 
+                            className={`px-4 py-2 bg-${color}-600 text-white rounded-lg hover:bg-${color}-700 transition-colors text-sm font-medium`}
+                          >
+                            View Details
+                          </Link>
+                        </div>
+                      );
+                    })}
+                    <Link to="/appointments" className="block">
+                      <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-center cursor-pointer">
+                        <Calendar className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="font-semibold text-gray-700">Book New Appointment</p>
+                      </div>
+                    </Link>
+                  </>
+                )}
               </div>
-              <Link to="/appointments" className="block">
-                <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-center cursor-pointer">
-                  <Calendar className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="font-semibold text-gray-700">Book New Appointment</p>
-                </div>
-              </Link>
-            </div>
+            )}
           </Card>
         </div>
       )}
@@ -221,53 +314,67 @@ export const Dashboard = () => {
       {user?.role === 'doctor' && (
         <div className="mt-8">
           <Card title="Today's Schedule">
-            <div className="space-y-3">
-              <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-600">
-                <div className="text-center min-w-[60px]">
-                  <p className="text-sm text-gray-600">09:00</p>
-                  <p className="text-xs text-gray-500">AM</p>
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900">John Smith</p>
-                  <p className="text-sm text-gray-600">General Checkup</p>
-                </div>
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                  Confirmed
-                </span>
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
               </div>
-              <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border-l-4 border-green-600">
-                <div className="text-center min-w-[60px]">
-                  <p className="text-sm text-gray-600">10:30</p>
-                  <p className="text-xs text-gray-500">AM</p>
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900">Alice Johnson</p>
-                  <p className="text-sm text-gray-600">Follow-up Consultation</p>
-                </div>
-                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-                  Scheduled
-                </span>
+            ) : (
+              <div className="space-y-3">
+                {todayAppointments.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Clock className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500 mb-2">No appointments scheduled for today</p>
+                    <p className="text-sm text-gray-400 mb-4">Set your availability to allow patients to book appointments</p>
+                    <Link 
+                      to="/appointments/availability" 
+                      className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                      Set Availability
+                    </Link>
+                  </div>
+                ) : (
+                  <>
+                    {todayAppointments.map((appointment, index) => {
+                      const borderColors = ['border-blue-600', 'border-green-600', 'border-purple-600'];
+                      const bgColors = ['bg-blue-50', 'bg-green-50', 'bg-purple-50'];
+                      const statusColors = {
+                        confirmed: 'bg-green-100 text-green-700',
+                        scheduled: 'bg-blue-100 text-blue-700'
+                      };
+                      
+                      return (
+                        <div 
+                          key={appointment.id} 
+                          className={`flex items-center gap-4 p-4 ${bgColors[index % bgColors.length]} rounded-lg border-l-4 ${borderColors[index % borderColors.length]}`}
+                        >
+                          <div className="text-center min-w-[60px]">
+                            <p className="text-sm text-gray-600">
+                              {appointmentService.formatTime(appointment.start_time).split(' ')[0]}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {appointmentService.formatTime(appointment.start_time).split(' ')[1]}
+                            </p>
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900">{appointment.patient_name}</p>
+                            <p className="text-sm text-gray-600">{appointment.reason}</p>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${statusColors[appointment.status] || 'bg-gray-100 text-gray-700'}`}>
+                            {appointment.status}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    <Link to="/appointments" className="block">
+                      <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-center cursor-pointer">
+                        <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="font-semibold text-gray-700">View Full Calendar</p>
+                      </div>
+                    </Link>
+                  </>
+                )}
               </div>
-              <div className="flex items-center gap-4 p-4 bg-purple-50 rounded-lg border-l-4 border-purple-600">
-                <div className="text-center min-w-[60px]">
-                  <p className="text-sm text-gray-600">02:00</p>
-                  <p className="text-xs text-gray-500">PM</p>
-                </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-900">Robert Brown</p>
-                  <p className="text-sm text-gray-600">Lab Results Discussion</p>
-                </div>
-                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                  Confirmed
-                </span>
-              </div>
-              <Link to="/appointments" className="block">
-                <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-center cursor-pointer">
-                  <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="font-semibold text-gray-700">View Full Calendar</p>
-                </div>
-              </Link>
-            </div>
+            )}
           </Card>
         </div>
       )}
