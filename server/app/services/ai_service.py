@@ -93,9 +93,9 @@ class AIService:
             Return JSON with this EXACT structure:
             {{
                 "risks": {{
-                    "cardiovascular": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0}},
-                    "diabetes": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0}},
-                    "respiratory": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0}}
+                    "cardiovascular": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0, "probability":0-100}},
+                    "diabetes": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0, "probability":0-100}},
+                    "respiratory": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0, "probability":0-100}}
                 }},
                 "confidence": 0.85,
                 "recommendations": ["recommendation1", "recommendation2"]
