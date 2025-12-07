@@ -8,6 +8,8 @@ from app.core.security import get_current_active_user
 from app.core.database import get_database
 from app.services.ai_service import ai_service
 from bson import ObjectId
+from datetime import datetime
+
 
 router = APIRouter()
 
@@ -127,27 +129,38 @@ async def predict_health_risks(
 async def get_health_recommendations(
     current_user: dict = Depends(get_current_active_user)
 ):
-    """Get personalized health recommendations"""
     db = await get_database()
-    
+
     # Get user profile
     user = await db.users.find_one({"_id": current_user["_id"]})
-    
+
     # Get recent medical records
     records = []
     cursor = db.medical_records.find(
         {"patient_id": str(current_user["_id"])}
     ).sort("created_at", -1).limit(10)
-    
+
     async for record in cursor:
+        record["_id"] = str(record["_id"])
+        record["patient_id"] = str(record["patient_id"])
+
+        # Convert datetime to str
+        if "created_at" in record and isinstance(record["created_at"], datetime):
+            record["created_at"] = record["created_at"].isoformat()
+
+        if "updated_at" in record and isinstance(record["updated_at"], datetime):
+            record["updated_at"] = record["updated_at"].isoformat()
+
         records.append(record)
-    
+
+    # Now everything is serializable
     patient_profile = {
+        "id": str(user["_id"]),
         "age": user.get("age"),
         "gender": user.get("gender"),
         "recent_records": records
     }
-    
+    print("Generating health recommendations for user:", patient_profile)
     recommendations = await ai_service.generate_health_recommendations(patient_profile)
-    
+
     return {"recommendations": recommendations}

@@ -180,8 +180,8 @@ class AIService:
             """
             
             response = self.model.generate_content(prompt)
+            print("Health Recommendations AI Response:\n", response.text)
             result = self._parse_ai_response(response.text)
-            
             return result if isinstance(result, list) else result.get('recommendations', [])
             
         except Exception as e:
