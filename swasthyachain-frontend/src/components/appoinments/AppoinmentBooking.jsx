@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, User, Stethoscope, Search, CheckCircle } from 'lucide-react';
-
 import toast from 'react-hot-toast';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
+import { appointmentService } from '../../services/appoinment.service';
+
 
 export const AppointmentBooking = () => {
   const [doctors, setDoctors] = useState([]);
@@ -13,7 +14,7 @@ export const AppointmentBooking = () => {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const { user, token } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchDoctors();
@@ -27,13 +28,11 @@ export const AppointmentBooking = () => {
 
   const fetchDoctors = async () => {
     try {
-      const response = await fetch('/api/v1/appointments/doctors', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
+      const data = await appointmentService.getDoctors();
       setDoctors(data);
     } catch (error) {
-      toast.error('Failed to load doctors',error);
+      toast.error('Failed to load doctors');
+      console.error(error);
     }
   };
 
@@ -43,14 +42,15 @@ export const AppointmentBooking = () => {
       const nextMonth = new Date();
       nextMonth.setMonth(nextMonth.getMonth() + 1);
       
-      const response = await fetch(
-        `/api/v1/appointments/availability/${doctorId}?date_from=${today}&date_to=${nextMonth.toISOString().split('T')[0]}`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
+      const data = await appointmentService.getDoctorAvailability(
+        doctorId,
+        today,
+        nextMonth.toISOString().split('T')[0]
       );
-      const data = await response.json();
       setAvailableSlots(data);
     } catch (error) {
-      toast.error('Failed to load available slots',error);
+      toast.error('Failed to load available slots');
+      console.error(error);
     }
   };
 
@@ -62,32 +62,22 @@ export const AppointmentBooking = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('/api/v1/appointments/book', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          doctor_id: selectedDoctor.id,
-          slot_id: selectedSlot.id,
-          reason,
-          notes
-        })
+      await appointmentService.bookAppointment({
+        doctor_id: selectedDoctor.id,
+        slot_id: selectedSlot.id,
+        reason,
+        notes
       });
 
-      if (response.ok) {
-        toast.success('Appointment booked successfully!');
-        setSelectedDoctor(null);
-        setSelectedSlot(null);
-        setReason('');
-        setNotes('');
-      } else {
-        const error = await response.json();
-        toast.error(error.detail || 'Failed to book appointment');
-      }
+      toast.success('Appointment booked successfully!');
+      setSelectedDoctor(null);
+      setSelectedSlot(null);
+      setReason('');
+      setNotes('');
     } catch (error) {
-      toast.error('Failed to book appointment',error);
+      const errorMsg = error.response?.data?.detail || 'Failed to book appointment';
+      toast.error(errorMsg);
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -97,23 +87,6 @@ export const AppointmentBooking = () => {
     doc.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     doc.specialization.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const formatTime = (timeStr) => {
-    return new Date(`2000-01-01T${timeStr}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
 
   return (
     <div className="max-w-6xl mx-auto p-6">
@@ -198,7 +171,7 @@ export const AppointmentBooking = () => {
                 ).map(([date, slots]) => (
                   <div key={date} className="border border-gray-200 rounded-lg p-4">
                     <h3 className="font-medium text-gray-900 mb-3">
-                      {formatDate(date)}
+                      {appointmentService.formatDate(date)}
                     </h3>
                     <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
                       {slots.map((slot) => (
@@ -211,7 +184,7 @@ export const AppointmentBooking = () => {
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                           }`}
                         >
-                          {formatTime(slot.start_time)}
+                          {appointmentService.formatTime(slot.start_time)}
                         </button>
                       ))}
                     </div>
@@ -265,8 +238,8 @@ export const AppointmentBooking = () => {
             <div className="text-sm text-gray-600 space-y-1">
               <p><strong>Doctor:</strong> {selectedDoctor.full_name}</p>
               <p><strong>Specialization:</strong> {selectedDoctor.specialization}</p>
-              <p><strong>Date:</strong> {formatDate(selectedSlot.date)}</p>
-              <p><strong>Time:</strong> {formatTime(selectedSlot.start_time)} - {formatTime(selectedSlot.end_time)}</p>
+              <p><strong>Date:</strong> {appointmentService.formatDate(selectedSlot.date)}</p>
+              <p><strong>Time:</strong> {appointmentService.formatTime(selectedSlot.start_time)} - {appointmentService.formatTime(selectedSlot.end_time)}</p>
             </div>
           </div>
         )}

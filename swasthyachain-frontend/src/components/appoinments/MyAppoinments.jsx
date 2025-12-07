@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { Calendar, Clock, User, Stethoscope, X, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
+import { appointmentService } from '../../services/appoinment.service';
+
 
 export const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
-  const { user, token } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchAppointments();
@@ -16,17 +18,12 @@ export const MyAppointments = () => {
   const fetchAppointments = async () => {
     setLoading(true);
     try {
-      const url = filter === 'all' 
-        ? '/api/v1/appointments/my-appointments'
-        : `/api/v1/appointments/my-appointments?status=${filter}`;
-      
-      const response = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
+      const status = filter === 'all' ? null : filter;
+      const data = await appointmentService.getMyAppointments(status);
       setAppointments(data);
     } catch (error) {
-      toast.error('Failed to load appointments',error);
+      toast.error('Failed to load appointments');
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -36,52 +33,12 @@ export const MyAppointments = () => {
     if (!confirm('Are you sure you want to cancel this appointment?')) return;
 
     try {
-      const response = await fetch(
-        `/api/v1/appointments/${appointmentId}/status`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ status: 'cancelled' })
-        }
-      );
-
-      if (response.ok) {
-        toast.success('Appointment cancelled');
-        fetchAppointments();
-      }
+      await appointmentService.cancelAppointment(appointmentId);
+      toast.success('Appointment cancelled');
+      fetchAppointments();
     } catch (error) {
-      toast.error('Failed to cancel appointment',error);
-    }
-  };
-
-  const formatDate = (dateStr) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const formatTime = (timeStr) => {
-    return new Date(`2000-01-01T${timeStr}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'no_show': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
+      toast.error('Failed to cancel appointment');
+      console.error(error);
     }
   };
 
@@ -151,9 +108,6 @@ export const MyAppointments = () => {
                       appointment={appointment}
                       userRole={user.role}
                       onCancel={cancelAppointment}
-                      formatDate={formatDate}
-                      formatTime={formatTime}
-                      getStatusColor={getStatusColor}
                     />
                   ))}
                 </div>
@@ -172,9 +126,6 @@ export const MyAppointments = () => {
                       key={appointment.id}
                       appointment={appointment}
                       userRole={user.role}
-                      formatDate={formatDate}
-                      formatTime={formatTime}
-                      getStatusColor={getStatusColor}
                     />
                   ))}
                 </div>
@@ -187,7 +138,7 @@ export const MyAppointments = () => {
   );
 };
 
-const AppointmentCard = ({ appointment, userRole, onCancel, formatDate, formatTime, getStatusColor }) => {
+const AppointmentCard = ({ appointment, userRole, onCancel }) => {
   const canCancel = ['scheduled', 'confirmed'].includes(appointment.status) && 
                     new Date(appointment.appointment_date) >= new Date();
 
@@ -209,7 +160,7 @@ const AppointmentCard = ({ appointment, userRole, onCancel, formatDate, formatTi
               </h3>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Calendar className="h-4 w-4" />
-                {formatDate(appointment.appointment_date)}
+                {appointmentService.formatDateLong(appointment.appointment_date)}
               </div>
             </div>
           </div>
@@ -217,7 +168,7 @@ const AppointmentCard = ({ appointment, userRole, onCancel, formatDate, formatTi
           <div className="ml-15 space-y-2">
             <div className="flex items-center gap-2 text-sm text-gray-700">
               <Clock className="h-4 w-4" />
-              {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
+              {appointmentService.formatTime(appointment.start_time)} - {appointmentService.formatTime(appointment.end_time)}
             </div>
             <p className="text-sm">
               <strong>Reason:</strong> {appointment.reason}
@@ -231,7 +182,7 @@ const AppointmentCard = ({ appointment, userRole, onCancel, formatDate, formatTi
         </div>
 
         <div className="flex flex-col items-end gap-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(appointment.status)}`}>
+          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${appointmentService.getStatusColor(appointment.status)}`}>
             {appointment.status}
           </span>
           

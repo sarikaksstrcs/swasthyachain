@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Clock, User, FileText, X } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { Calendar, ChevronLeft, ChevronRight, Clock, User, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { appointmentService } from '../../services/appoinment.service';
+
 
 export const DoctorCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -10,7 +11,6 @@ export const DoctorCalendar = () => {
   const [dayAppointments, setDayAppointments] = useState([]);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { token } = useAuth();
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -21,11 +21,7 @@ export const DoctorCalendar = () => {
 
   const fetchMonthAppointments = async () => {
     try {
-      const response = await fetch(
-        `/api/v1/appointments/appointments/month/${year}/${month + 1}`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-      const data = await response.json();
+      const data = await appointmentService.getMonthAppointments(year, month + 1);
       
       const counts = {};
       data.forEach(item => {
@@ -33,7 +29,8 @@ export const DoctorCalendar = () => {
       });
       setAppointmentCounts(counts);
     } catch (error) {
-      toast.error('Failed to load appointments',error);
+      toast.error('Failed to load appointments');
+      console.error(error);
     }
   };
 
@@ -41,16 +38,13 @@ export const DoctorCalendar = () => {
     setLoading(true);
     try {
       const dateStr = date.toISOString().split('T')[0];
-      const response = await fetch(
-        `/api/v1/appointments/appointments/date/${dateStr}`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      );
-      const data = await response.json();
+      const data = await appointmentService.getDayAppointments(dateStr);
       setDayAppointments(data);
       setSelectedDate(date);
       setShowDetailsModal(true);
     } catch (error) {
-      toast.error('Failed to load day appointments',error);
+      toast.error('Failed to load day appointments');
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -58,25 +52,13 @@ export const DoctorCalendar = () => {
 
   const updateAppointmentStatus = async (appointmentId, status) => {
     try {
-      const response = await fetch(
-        `/api/v1/appointments/${appointmentId}/status`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ status })
-        }
-      );
-
-      if (response.ok) {
-        toast.success('Appointment updated');
-        fetchDayAppointments(selectedDate);
-        fetchMonthAppointments();
-      }
+      await appointmentService.updateAppointmentStatus(appointmentId, status);
+      toast.success('Appointment updated');
+      fetchDayAppointments(selectedDate);
+      fetchMonthAppointments();
     } catch (error) {
-      toast.error('Failed to update appointment',error);
+      toast.error('Failed to update appointment');
+      console.error(error);
     }
   };
 
@@ -100,14 +82,6 @@ export const DoctorCalendar = () => {
     setCurrentDate(new Date());
   };
 
-  const formatTime = (timeStr) => {
-    return new Date(`2000-01-01T${timeStr}`).toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    });
-  };
-
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -125,17 +99,6 @@ export const DoctorCalendar = () => {
   for (let day = 1; day <= daysInMonth; day++) {
     calendarDays.push(day);
   }
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'scheduled': return 'bg-blue-100 text-blue-800';
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'completed': return 'bg-gray-100 text-gray-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'no_show': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -231,12 +194,7 @@ export const DoctorCalendar = () => {
           <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <h2 className="text-2xl font-bold text-gray-900">
-                {selectedDate?.toLocaleDateString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
+                {appointmentService.formatDateLong(selectedDate)}
               </h2>
               <button
                 onClick={() => setShowDetailsModal(false)}
@@ -274,7 +232,7 @@ export const DoctorCalendar = () => {
                               </h3>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Clock className="h-4 w-4" />
-                                {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)}
+                                {appointmentService.formatTime(appointment.start_time)} - {appointmentService.formatTime(appointment.end_time)}
                               </div>
                             </div>
                           </div>
@@ -292,7 +250,7 @@ export const DoctorCalendar = () => {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(appointment.status)}`}>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${appointmentService.getStatusColor(appointment.status)}`}>
                             {appointment.status}
                           </span>
                           

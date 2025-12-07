@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Clock, Plus, Calendar } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
+import { appointmentService } from '../../services/appoinment.service';
+
 
 export const DoctorAvailability = () => {
   const [selectedDate, setSelectedDate] = useState('');
   const [timeSlots, setTimeSlots] = useState([{ start: '', end: '' }]);
   const [loading, setLoading] = useState(false);
-  const { token } = useAuth();
 
   const addTimeSlot = () => {
     setTimeSlots([...timeSlots, { start: '', end: '' }]);
@@ -24,7 +24,6 @@ export const DoctorAvailability = () => {
   };
 
   const handleSubmit = async () => {
-
     if (!selectedDate) {
       toast.error('Please select a date');
       return;
@@ -38,34 +37,21 @@ export const DoctorAvailability = () => {
 
     setLoading(true);
     try {
-      const promises = validSlots.map(slot =>
-        fetch('/api/v1/appointments/availability', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            date: selectedDate,
-            start_time: slot.start,
-            end_time: slot.end,
-            is_available: true
-          })
-        })
-      );
+      const availabilityData = validSlots.map(slot => ({
+        date: selectedDate,
+        start_time: slot.start,
+        end_time: slot.end,
+        is_available: true
+      }));
 
-      const results = await Promise.all(promises);
-      const allSuccessful = results.every(r => r.ok);
-
-      if (allSuccessful) {
-        toast.success(`${validSlots.length} time slot(s) added successfully`);
-        setSelectedDate('');
-        setTimeSlots([{ start: '', end: '' }]);
-      } else {
-        toast.error('Some slots failed to add');
-      }
+      await appointmentService.createBulkAvailability(availabilityData);
+      
+      toast.success(`${validSlots.length} time slot(s) added successfully`);
+      setSelectedDate('');
+      setTimeSlots([{ start: '', end: '' }]);
     } catch (error) {
-      toast.error('Failed to add availability',error);
+      toast.error('Failed to add availability');
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -77,19 +63,7 @@ export const DoctorAvailability = () => {
       return;
     }
 
-    // Generate slots from 9 AM to 5 PM with 30-minute intervals
-    const slots = [];
-    for (let hour = 9; hour < 17; hour++) {
-      slots.push({
-        start: `${hour.toString().padStart(2, '0')}:00`,
-        end: `${hour.toString().padStart(2, '0')}:30`
-      });
-      slots.push({
-        start: `${hour.toString().padStart(2, '0')}:30`,
-        end: `${(hour + 1).toString().padStart(2, '0')}:00`
-      });
-    }
-    
+    const slots = appointmentService.generateTimeSlots(9, 17, 30);
     setTimeSlots(slots);
     toast.success('Generated standard working hours (9 AM - 5 PM)');
   };
