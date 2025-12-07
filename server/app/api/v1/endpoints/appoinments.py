@@ -403,3 +403,70 @@ async def update_appointment_status(
     updated_appointment = prepare_for_response(updated_appointment)
     
     return AppointmentResponse(**updated_appointment)
+# Add this endpoint to app/api/v1/endpoints/appointments.py
+
+@router.get("/my-patients", response_model=List[dict])
+async def get_my_patients(
+    current_user: dict = Depends(require_role([UserRole.DOCTOR]))
+):
+    """Get list of all patients who have had appointments with this doctor"""
+    db = await get_database()
+    
+    # Get unique patient IDs from appointments
+    pipeline = [
+        {
+            "$match": {
+                "doctor_id": str(current_user["_id"]),
+            }
+        },
+        {
+            "$group": {
+                "_id": "$patient_id",
+                "patient_name": {"$first": "$patient_name"},
+                "last_appointment": {"$max": "$appointment_date"},
+                "total_appointments": {"$sum": 1}
+            }
+        },
+        {
+            "$sort": {"last_appointment": -1}
+        }
+    ]
+    
+    # Get aggregated appointment data
+    appointment_data = {}
+    async for doc in db.appointments.aggregate(pipeline):
+        appointment_data[doc["_id"]] = {
+            "last_appointment": doc["last_appointment"],
+            "total_appointments": doc["total_appointments"],
+            "patient_name": doc["patient_name"]
+        }
+    
+    # Get full patient details
+    patient_ids = [ObjectId(pid) for pid in appointment_data.keys()]
+    patients = []
+    
+    cursor = db.users.find({
+        "_id": {"$in": patient_ids},
+        "role": UserRole.PATIENT.value
+    })
+    
+    async for patient in cursor:
+        patient_id = str(patient["_id"])
+        apt_data = appointment_data.get(patient_id, {})
+        
+        patients.append({
+            "id": patient_id,
+            "full_name": patient["full_name"],
+            "email": patient["email"],
+            "phone": patient.get("phone"),
+            "last_appointment": apt_data.get("last_appointment"),
+            "total_appointments": apt_data.get("total_appointments", 0)
+        })
+    
+    # Sort by last appointment date (most recent first)
+    patients.sort(
+        key=lambda x: x.get("last_appointment") or "", 
+        reverse=True
+    )
+    
+    return patients

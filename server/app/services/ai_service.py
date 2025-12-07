@@ -3,6 +3,7 @@ import google.generativeai as genai
 from app.core.config import settings
 from typing import Dict, List
 import json
+import re
 from bson.objectid import ObjectId
 from datetime import datetime
 
@@ -12,7 +13,7 @@ class AIService:
     """
     
     def __init__(self):
-        print("Initializing AI Service with Gemini model",settings.GEMINI_API_KEY)
+        print("Initializing AI Service with Gemini model")
         if settings.GEMINI_API_KEY:
             genai.configure(api_key=settings.GEMINI_API_KEY)
             self.model = genai.GenerativeModel(settings.GEMINI_MODEL)
@@ -20,6 +21,7 @@ class AIService:
             self.model = None
 
     def _sanitize_for_json(self, data):
+        """Convert non-serializable objects to serializable formats"""
         if isinstance(data, dict):
             return {k: self._sanitize_for_json(v) for k, v in data.items()}
         if isinstance(data, list):
@@ -27,15 +29,13 @@ class AIService:
         if isinstance(data, ObjectId):
             return str(data)
         if isinstance(data, datetime):
-            return data.isoformat()  # <-- convert to string
+            return data.isoformat()
         return data
-
     
     async def summarize_medical_history(self, medical_records: List[Dict]) -> Dict:
         """
         Summarize patient's medical history using AI
         """
-        print("Initializing AI Service with Gemini model",settings.GEMINI_API_KEY)
         if not self.model:
             return {"error": "Gemini API key not configured"}
         
@@ -45,28 +45,82 @@ class AIService:
             print("Medical Records for AI:\n", records_text)
             
             prompt = f"""
-            You are a medical AI assistant. Analyze the following patient medical records and provide:
-            1. A concise summary of the patient's medical history
-            2. Key medical conditions identified
-            3. Current medications
-            4. Health recommendations
-            5. Potential risk factors
+            You are a medical AI assistant. Analyze the following patient medical records and provide a structured analysis.
             
             Medical Records:
             {records_text}
             
-            Provide the response in JSON format with keys: summary, key_conditions, medications, recommendations, risk_factors
+            Provide your response in this EXACT JSON format (no markdown, no code blocks):
+            {{
+                "summary": "A concise 2-3 sentence summary of the patient's overall health status",
+                "key_conditions": ["condition1", "condition2", "condition3"],
+                "medications": ["medication1", "medication2"],
+                "recommendations": ["recommendation1", "recommendation2", "recommendation3"],
+                "risk_factors": ["risk1", "risk2"]
+            }}
+            
+            Important rules:
+            - All fields must be present
+            - key_conditions, medications, recommendations, and risk_factors must be arrays of strings
+            - If no data available for a field, use an empty array []
+            - Do not include any markdown formatting or code blocks
+            - Return ONLY valid JSON
             """
             
             response = self.model.generate_content(prompt)
             print("AI Response:\n", response.text)
+            
             result = self._parse_ai_response(response.text)
+            
+            # Ensure all required fields are lists
+            result = self._ensure_valid_summary_format(result)
             
             return result
             
         except Exception as e:
             print("AI Summarization Error:", str(e))
-            return {"error": f"AI summarization failed: {str(e)}"}
+            return {
+                "summary": f"Error generating summary: {str(e)}",
+                "key_conditions": [],
+                "medications": [],
+                "recommendations": [],
+                "risk_factors": []
+            }
+    
+    def _ensure_valid_summary_format(self, result: Dict) -> Dict:
+        """Ensure the summary response has the correct format"""
+        # Default structure
+        formatted = {
+            "summary": "",
+            "key_conditions": [],
+            "medications": [],
+            "recommendations": [],
+            "risk_factors": []
+        }
+        
+        # Extract summary
+        if "summary" in result:
+            formatted["summary"] = str(result["summary"])
+        
+        # Convert all list fields to proper lists
+        for field in ["key_conditions", "medications", "recommendations", "risk_factors"]:
+            if field in result:
+                value = result[field]
+                # If it's already a list, use it
+                if isinstance(value, list):
+                    formatted[field] = [str(item) for item in value]
+                # If it's a string, try to split it or wrap it
+                elif isinstance(value, str):
+                    if value.strip():
+                        # Try to split by newlines, commas, or bullets
+                        items = re.split(r'[\n,•\-]\s*', value)
+                        formatted[field] = [item.strip() for item in items if item.strip()]
+                    else:
+                        formatted[field] = []
+                else:
+                    formatted[field] = []
+        
+        return formatted
     
     async def predict_disease_risk(self, patient_data: Dict) -> Dict:
         """
@@ -78,83 +132,91 @@ class AIService:
         try:
             clean_data = self._sanitize_for_json(patient_data)
             print("Patient Data for Prediction:\n", json.dumps(clean_data, indent=2))
+            
             prompt = f"""
-            As a medical AI, analyze this patient data and predict potential disease risks:
+            As a medical AI, analyze this patient data and predict potential disease risks.
 
             Patient Data:
             {json.dumps(clean_data, indent=2)}
             
-            Provide risk assessment for:
-            - Cardiovascular diseases
-            - Diabetes
-            - Respiratory conditions
-            - Other relevant conditions
-            
-            Return JSON with this EXACT structure:
+            Provide your response in this EXACT JSON format (no markdown, no code blocks):
             {{
                 "risks": {{
-                    "cardiovascular": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0, "probability":0-100}},
-                    "diabetes": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0, "probability":0-100}},
-                    "respiratory": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0, "probability":0-100}}
+                    "cardiovascular": {{"risk_level": "low", "confidence": 0.75, "probability": 25}},
+                    "diabetes": {{"risk_level": "medium", "confidence": 0.68, "probability": 45}},
+                    "respiratory": {{"risk_level": "low", "confidence": 0.82, "probability": 15}}
                 }},
-                "confidence": 0.85,
-                "recommendations": ["recommendation1", "recommendation2"]
+                "confidence": 0.75,
+                "recommendations": ["recommendation1", "recommendation2", "recommendation3"]
             }}
+            
+            Rules:
+            - risk_level must be one of: "low", "medium", "high"
+            - confidence must be a number between 0.0 and 1.0
+            - probability must be a number between 0 and 100
+            - recommendations must be an array of strings
+            - Return ONLY valid JSON, no markdown
             """
             
             response = self.model.generate_content(prompt)
+            print("AI Prediction Response:\n", response.text)
+            
             result = self._parse_ai_response(response.text)
             
-            # Ensure risks is a dict, not a list
-            if "risks" in result and isinstance(result["risks"], list):
-                # Convert list to dict format
-                risks_dict = {}
-                for risk_item in result["risks"]:
-                    condition = risk_item.get("condition", "unknown")
-                    risks_dict[condition] = {
-                        "risk_level": risk_item.get("risk_level", "unknown"),
-                        "confidence": risk_item.get("confidence", 0.0)
-                    }
-                result["risks"] = risks_dict
+            # Ensure valid format
+            result = self._ensure_valid_prediction_format(result)
             
             return result
             
         except Exception as e:
             print(f"Risk prediction error: {str(e)}")
-            return {"error": f"Risk prediction failed: {str(e)}"}
-    async def verify_insurance_claim(self, claim_data: Dict, medical_records: List[Dict]) -> Dict:
-        """
-        Verify insurance claim against medical records
-        """
-        if not self.model:
-            return {"error": "Gemini API key not configured"}
+            return {
+                "risks": {
+                    "cardiovascular": {"risk_level": "unknown", "confidence": 0.0, "probability": 0},
+                    "diabetes": {"risk_level": "unknown", "confidence": 0.0, "probability": 0},
+                    "respiratory": {"risk_level": "unknown", "confidence": 0.0, "probability": 0}
+                },
+                "confidence": 0.0,
+                "recommendations": [f"Error: {str(e)}"]
+            }
+    
+    def _ensure_valid_prediction_format(self, result: Dict) -> Dict:
+        """Ensure prediction response has correct format"""
+        formatted = {
+            "risks": {},
+            "confidence": 0.0,
+            "recommendations": []
+        }
         
-        try:
-            prompt = f"""
-            Verify this insurance claim against patient medical records:
-            
-            Claim Data:
-            {json.dumps(claim_data, indent=2)}
-            
-            Medical Records:
-            {self._format_records_for_ai(medical_records[:5])}
-            
-            Check for:
-            1. Treatment consistency with diagnosis
-            2. Cost reasonableness
-            3. Potential fraud indicators
-            4. Missing documentation
-            
-            Return JSON with: is_valid, confidence, issues, recommendations
-            """
-            
-            response = self.model.generate_content(prompt)
-            result = self._parse_ai_response(response.text)
-            
-            return result
-            
-        except Exception as e:
-            return {"error": f"Insurance verification failed: {str(e)}"}
+        # Handle risks
+        if "risks" in result and isinstance(result["risks"], dict):
+            formatted["risks"] = result["risks"]
+        elif "risks" in result and isinstance(result["risks"], list):
+            # Convert list to dict format
+            for risk_item in result["risks"]:
+                if isinstance(risk_item, dict) and "condition" in risk_item:
+                    condition = risk_item["condition"]
+                    formatted["risks"][condition] = {
+                        "risk_level": risk_item.get("risk_level", "unknown"),
+                        "confidence": float(risk_item.get("confidence", 0.0)),
+                        "probability": int(risk_item.get("probability", 0))
+                    }
+        
+        # Handle confidence
+        if "confidence" in result:
+            try:
+                formatted["confidence"] = float(result["confidence"])
+            except (ValueError, TypeError):
+                formatted["confidence"] = 0.0
+        
+        # Handle recommendations
+        if "recommendations" in result:
+            if isinstance(result["recommendations"], list):
+                formatted["recommendations"] = [str(r) for r in result["recommendations"]]
+            elif isinstance(result["recommendations"], str):
+                formatted["recommendations"] = [result["recommendations"]]
+        
+        return formatted
     
     async def generate_health_recommendations(self, patient_profile: Dict) -> List[str]:
         """
@@ -164,10 +226,16 @@ class AIService:
             return ["Gemini API key not configured"]
         
         try:
-            prompt = f"""
-            Based on this patient profile, provide 5-7 actionable health recommendations:
+            clean_profile = self._sanitize_for_json(patient_profile)
             
-            {json.dumps(patient_profile, indent=2)}
+            prompt = f"""
+            Based on this patient profile, provide 5-7 actionable health recommendations.
+            
+            Patient Profile:
+            {json.dumps(clean_profile, indent=2)}
+            
+            Provide your response as a JSON array of strings in this EXACT format:
+            ["recommendation 1", "recommendation 2", "recommendation 3", "recommendation 4", "recommendation 5"]
             
             Focus on:
             - Diet improvements
@@ -176,28 +244,43 @@ class AIService:
             - Lifestyle changes
             - Preventive care
             
-            Return as a JSON array of strings.
+            Return ONLY a JSON array, no markdown, no code blocks.
             """
             
             response = self.model.generate_content(prompt)
             print("Health Recommendations AI Response:\n", response.text)
+            
             result = self._parse_ai_response(response.text)
-            return result if isinstance(result, list) else result.get('recommendations', [])
+            
+            # Ensure it's a list
+            if isinstance(result, list):
+                return [str(item) for item in result]
+            elif isinstance(result, dict) and "recommendations" in result:
+                recs = result["recommendations"]
+                if isinstance(recs, list):
+                    return [str(item) for item in recs]
+                return [str(recs)]
+            else:
+                return ["Unable to generate recommendations at this time"]
             
         except Exception as e:
+            print(f"Error generating recommendations: {str(e)}")
             return [f"Error generating recommendations: {str(e)}"]
     
     def _format_records_for_ai(self, records: List[Dict]) -> str:
         """Format medical records for AI processing"""
+        if not records:
+            return "No medical records available"
+        
         formatted = []
         for record in records:
             formatted.append(f"""
-            Type: {record.get('record_type')}
-            Title: {record.get('title')}
+            Type: {record.get('record_type', 'Unknown')}
+            Title: {record.get('title', 'No title')}
             Description: {record.get('description', 'N/A')}
-            Date: {record.get('created_at')}
+            Date: {record.get('created_at', 'Unknown date')}
             Diagnosis: {record.get('diagnosis', 'N/A')}
-            Medications: {', '.join(record.get('medications', []))}
+            Medications: {', '.join(record.get('medications', [])) or 'None'}
             """)
         return "\n---\n".join(formatted)
     
@@ -206,39 +289,46 @@ class AIService:
         try:
             text = response_text.strip()
             
-            # Try to find JSON in code blocks first
-            import re
-            
-            # Look for ```json ... ``` blocks
-            json_match = re.search(r'```json\s*(.*?)\s*```', text, re.DOTALL)
+            # Remove markdown code blocks
+            # Look for ```json ... ```
+            json_match = re.search(r'```json\s*(.*?)\s*```', text, re.DOTALL | re.IGNORECASE)
             if json_match:
-                json_str = json_match.group(1).strip()
-                return json.loads(json_str)
+                text = json_match.group(1).strip()
+            else:
+                # Look for ``` ... ```
+                code_match = re.search(r'```\s*(.*?)\s*```', text, re.DOTALL)
+                if code_match:
+                    text = code_match.group(1).strip()
+                    # Remove "json" if it's at the start
+                    if text.lower().startswith('json'):
+                        text = text[4:].strip()
             
-            # Look for ``` ... ``` blocks (without json marker)
-            code_match = re.search(r'```\s*(.*?)\s*```', text, re.DOTALL)
-            if code_match:
-                json_str = code_match.group(1).strip()
-                # Remove "json" if it's at the start
-                if json_str.startswith('json'):
-                    json_str = json_str[4:].strip()
-                return json.loads(json_str)
+            # Try to find JSON object/array in the text
+            # Look for { ... } or [ ... ]
+            json_pattern = r'(\{.*\}|\[.*\])'
+            json_match = re.search(json_pattern, text, re.DOTALL)
+            if json_match:
+                text = json_match.group(1)
             
-            # Try to find JSON object in the text using { ... }
-            json_obj_match = re.search(r'\{.*\}', text, re.DOTALL)
-            if json_obj_match:
-                return json.loads(json_obj_match.group(0))
-            
-            # If no JSON found, try parsing the entire text
-            return json.loads(text)
+            # Parse JSON
+            result = json.loads(text)
+            return result
             
         except json.JSONDecodeError as e:
             print(f"JSON parsing error: {e}")
             print(f"Attempted to parse: {text[:500]}...")
-            # If parsing fails, return as text wrapped in response key
-            return {"response": response_text}
+            
+            # Return a safe default structure
+            return {
+                "error": "Failed to parse AI response",
+                "raw_response": response_text[:500]
+            }
         except Exception as e:
             print(f"Unexpected error in _parse_ai_response: {e}")
-            return {"response": response_text}
+            return {
+                "error": str(e),
+                "raw_response": response_text[:500]
+            }
 
+# Global AI service instance
 ai_service = AIService()
