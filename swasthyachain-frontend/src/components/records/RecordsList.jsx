@@ -21,7 +21,7 @@ export const RecordsList = ({ onViewRecord }) => {
       setRecords(data);
       setError(null);
     } catch (err) {
-      setError('Failed to fetch medical records');
+      setError('Failed to fetch medical records',err);
       toast.error('Failed to load records');
     } finally {
       setLoading(false);
@@ -36,7 +36,7 @@ export const RecordsList = ({ onViewRecord }) => {
       setRecords(records.filter(r => r.id !== id));
       toast.success('Record deleted successfully');
     } catch (err) {
-      toast.error('Failed to delete record');
+      toast.error('Failed to delete record',err);
     }
   };
 

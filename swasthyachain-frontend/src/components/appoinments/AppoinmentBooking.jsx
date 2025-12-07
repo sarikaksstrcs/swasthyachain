@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, User, Stethoscope, Search, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAuth } from '@/hooks/useAuth';
 import { appointmentService } from '../../services/appoinment.service';
 
 
@@ -14,7 +13,7 @@ export const AppointmentBooking = () => {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const { user } = useAuth();
+
 
   useEffect(() => {
     fetchDoctors();
