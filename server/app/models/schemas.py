@@ -71,7 +71,7 @@ class MedicalRecordCreate(BaseModel):
 class MedicalRecordResponse(BaseModel):
     id: str
     patient_id: str
-    record_type: str  # Changed from RecordType enum to str
+    record_type: str
     title: str
     description: Optional[str] = None
     ipfs_hash: str
@@ -79,10 +79,11 @@ class MedicalRecordResponse(BaseModel):
     encrypted: bool
     doctor_id: Optional[str] = None
     hospital_id: Optional[str] = None
-    filename: Optional[str] = None  # Add this if it's in DB
-    file_size: Optional[int] = None  # Add this if it's in DB
-    record_hash: Optional[str] = None  # Add this if it's in DB
-    encryption_iv: Optional[str] = None  # Add this if it's in DB
+    filename: Optional[str] = None
+    file_size: Optional[int] = None
+    record_hash: Optional[str] = None
+    encryption_iv: Optional[str] = None
+    content_type: Optional[str] = None  # ADD THIS
     created_at: datetime
     updated_at: datetime
     

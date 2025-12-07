@@ -1,9 +1,27 @@
-import { X, Calendar, FileText, Lock, Share2 } from 'lucide-react';
+import { useState } from 'react';
+import { X, Calendar, FileText, Lock, Share2, Download } from 'lucide-react';
 import { formatDateTime, getRecordTypeLabel } from '@/utils/helpers';
 import { Button } from '@/components/common/Button';
+import { recordsService } from '@/services/records.service';
+import toast from 'react-hot-toast';
 
 export const RecordDetails = ({ record, onClose }) => {
+  const [downloading, setDownloading] = useState(false);
+
   if (!record) return null;
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      await recordsService.downloadRecord(record.id, record.filename);
+      toast.success('File downloaded successfully!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to download file');
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -57,6 +75,23 @@ export const RecordDetails = ({ record, onClose }) => {
         )}
       </div>
 
+      {record.filename && (
+        <div>
+          <h3 className="font-semibold mb-2">File Information</h3>
+          <div className="bg-gray-50 p-3 rounded-lg">
+            <p className="text-sm text-gray-600">
+              <span className="font-medium">Filename:</span> {record.filename}
+            </p>
+            {record.file_size && (
+              <p className="text-sm text-gray-600 mt-1">
+                <span className="font-medium">Size:</span>{' '}
+                {(record.file_size / 1024).toFixed(2)} KB
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {record.description && (
         <div>
           <h3 className="font-semibold mb-2">Description</h3>
@@ -83,8 +118,14 @@ export const RecordDetails = ({ record, onClose }) => {
       )}
 
       <div className="flex gap-3 pt-4 border-t">
-        <Button variant="blue" className="flex-1">
-          Download
+        <Button 
+          variant="blue" 
+          className="flex-1"
+          onClick={handleDownload}
+          loading={downloading}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          {downloading ? 'Downloading...' : 'Download'}
         </Button>
         <Button variant="secondary" className="flex-1">
           Share

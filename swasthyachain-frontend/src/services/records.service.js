@@ -31,6 +31,25 @@ export const recordsService = {
   },
 
   deleteRecord: async (id) => {
-    await api.delete(`/records/${id}`);
+    await api.delete(`/records/${id}`);    
   },
+
+  downloadRecord: async (id, filename) => {
+    const response = await api.get(`/records/${id}/download`, {
+        responseType: 'blob', // Important!
+    });
+
+    // Create blob and trigger download
+    const blob = new Blob([response.data]);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename || `record_${id}`;
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    }
 };
