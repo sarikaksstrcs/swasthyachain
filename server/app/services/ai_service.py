@@ -3,7 +3,8 @@ import google.generativeai as genai
 from app.core.config import settings
 from typing import Dict, List
 import json
-
+from bson.objectid import ObjectId
+from datetime import datetime
 
 class AIService:
     """
@@ -17,6 +18,18 @@ class AIService:
             self.model = genai.GenerativeModel(settings.GEMINI_MODEL)
         else:
             self.model = None
+
+    def _sanitize_for_json(self, data):
+        if isinstance(data, dict):
+            return {k: self._sanitize_for_json(v) for k, v in data.items()}
+        if isinstance(data, list):
+            return [self._sanitize_for_json(i) for i in data]
+        if isinstance(data, ObjectId):
+            return str(data)
+        if isinstance(data, datetime):
+            return data.isoformat()  # <-- convert to string
+        return data
+
     
     async def summarize_medical_history(self, medical_records: List[Dict]) -> Dict:
         """
@@ -63,11 +76,13 @@ class AIService:
             return {"error": "Gemini API key not configured"}
         
         try:
+            clean_data = self._sanitize_for_json(patient_data)
+            print("Patient Data for Prediction:\n", json.dumps(clean_data, indent=2))
             prompt = f"""
             As a medical AI, analyze this patient data and predict potential disease risks:
-            
+
             Patient Data:
-            {json.dumps(patient_data, indent=2)}
+            {json.dumps(clean_data, indent=2)}
             
             Provide risk assessment for:
             - Cardiovascular diseases
@@ -75,48 +90,38 @@ class AIService:
             - Respiratory conditions
             - Other relevant conditions
             
-            Return JSON with: prediction_type, risks (array of {{condition, risk_level, confidence}}), recommendations
+            Return JSON with this EXACT structure:
+            {{
+                "risks": {{
+                    "cardiovascular": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0}},
+                    "diabetes": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0}},
+                    "respiratory": {{"risk_level": "low|medium|high", "confidence": 0.0-1.0}}
+                }},
+                "confidence": 0.85,
+                "recommendations": ["recommendation1", "recommendation2"]
+            }}
             """
             
             response = self.model.generate_content(prompt)
             result = self._parse_ai_response(response.text)
             
+            # Ensure risks is a dict, not a list
+            if "risks" in result and isinstance(result["risks"], list):
+                # Convert list to dict format
+                risks_dict = {}
+                for risk_item in result["risks"]:
+                    condition = risk_item.get("condition", "unknown")
+                    risks_dict[condition] = {
+                        "risk_level": risk_item.get("risk_level", "unknown"),
+                        "confidence": risk_item.get("confidence", 0.0)
+                    }
+                result["risks"] = risks_dict
+            
             return result
             
         except Exception as e:
+            print(f"Risk prediction error: {str(e)}")
             return {"error": f"Risk prediction failed: {str(e)}"}
-    
-    async def extract_prescription_data(self, image_data: bytes) -> Dict:
-        """
-        Extract data from prescription images using OCR + NLP
-        """
-        if not self.model:
-            return {"error": "Gemini API key not configured"}
-        
-        try:
-            # Use Gemini Vision for OCR
-            prompt = """
-            Extract the following information from this medical prescription:
-            - Patient name
-            - Doctor name
-            - Medications (name, dosage, frequency)
-            - Diagnosis
-            - Date
-            
-            Return in JSON format.
-            """
-            
-            # In production, send image to Gemini Vision
-            # For now, return placeholder
-            return {
-                "extracted": True,
-                "patient_name": "Extracted from image",
-                "medications": []
-            }
-            
-        except Exception as e:
-            return {"error": f"Prescription extraction failed: {str(e)}"}
-    
     async def verify_insurance_claim(self, claim_data: Dict, medical_records: List[Dict]) -> Dict:
         """
         Verify insurance claim against medical records
@@ -199,18 +204,41 @@ class AIService:
     def _parse_ai_response(self, response_text: str) -> Dict:
         """Parse AI response, handle JSON extraction"""
         try:
-            # Remove markdown code blocks if present
             text = response_text.strip()
-            if text.startswith("```json"):
-                text = text[7:]
-            if text.startswith("```"):
-                text = text[3:]
-            if text.endswith("```"):
-                text = text[:-3]
             
-            return json.loads(text.strip())
-        except:
-            # If parsing fails, return as text
+            # Try to find JSON in code blocks first
+            import re
+            
+            # Look for ```json ... ``` blocks
+            json_match = re.search(r'```json\s*(.*?)\s*```', text, re.DOTALL)
+            if json_match:
+                json_str = json_match.group(1).strip()
+                return json.loads(json_str)
+            
+            # Look for ``` ... ``` blocks (without json marker)
+            code_match = re.search(r'```\s*(.*?)\s*```', text, re.DOTALL)
+            if code_match:
+                json_str = code_match.group(1).strip()
+                # Remove "json" if it's at the start
+                if json_str.startswith('json'):
+                    json_str = json_str[4:].strip()
+                return json.loads(json_str)
+            
+            # Try to find JSON object in the text using { ... }
+            json_obj_match = re.search(r'\{.*\}', text, re.DOTALL)
+            if json_obj_match:
+                return json.loads(json_obj_match.group(0))
+            
+            # If no JSON found, try parsing the entire text
+            return json.loads(text)
+            
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {e}")
+            print(f"Attempted to parse: {text[:500]}...")
+            # If parsing fails, return as text wrapped in response key
+            return {"response": response_text}
+        except Exception as e:
+            print(f"Unexpected error in _parse_ai_response: {e}")
             return {"response": response_text}
 
 ai_service = AIService()

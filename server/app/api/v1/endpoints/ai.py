@@ -7,6 +7,7 @@ from app.models.schemas import (
 from app.core.security import get_current_active_user
 from app.core.database import get_database
 from app.services.ai_service import ai_service
+from bson import ObjectId
 
 router = APIRouter()
 
@@ -85,6 +86,7 @@ async def predict_health_risks(
             )
     
     # Get patient data
+    print("Fetching patient data for prediction:", ObjectId(request.patient_id))
     patient = await db.users.find_one({"_id": ObjectId(request.patient_id)})
     if not patient:
         raise HTTPException(
@@ -106,6 +108,7 @@ async def predict_health_risks(
     
     # Generate prediction
     result = await ai_service.predict_disease_risk(patient_data)
+    print("Prediction Result:", result)
     
     if "error" in result:
         raise HTTPException(
