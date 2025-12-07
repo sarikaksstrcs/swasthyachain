@@ -98,9 +98,9 @@ async def upload_medical_record(
     
     # Upload to IPFS
     ipfs_result = await ipfs_service.upload_file(
-        encrypted["encrypted_data"].encode(),
-        file.filename
-    )
+    base64.b64decode(encrypted["encrypted_data"]),  # Decode to bytes for IPFS
+    file.filename
+)
     
     # Record on blockchain
     blockchain_tx = await blockchain_service.record_medical_data(
@@ -117,7 +117,7 @@ async def upload_medical_record(
     )
     
     # Store encrypted file content as base64 in MongoDB
-    encrypted_file_base64 = base64.b64encode(encrypted["encrypted_data"].encode()).decode('utf-8')
+    encrypted_file_base64 = encrypted["encrypted_data"]
     
     # Save to database with file content
     record_dict = {
@@ -285,15 +285,70 @@ async def download_record(
     is_patient = str(record["patient_id"]) == str(current_user["_id"])
     
     if not is_patient:
-        has_consent = await check_consent(
-            db, record["patient_id"], str(current_user["_id"])
-        )
-        if not has_consent:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="No consent to download this record"
-            )
+        # Check if user is a doctor who has treated this patient
+        is_treating_doctor = False
+        if current_user["role"] == UserRole.DOCTOR.value:
+            appointment = await db.appointments.find_one({
+                "doctor_id": str(current_user["_id"]),
+                "patient_id": record["patient_id"]
+            })
+            is_treating_doctor = appointment is not None
         
+        # If not treating doctor, check for consent
+        if not is_treating_doctor:
+            has_consent = await check_consent(
+                db, record["patient_id"], str(current_user["_id"])
+            )
+            if not has_consent:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="No consent to download this record"
+                )
+        
+        # Record access for audit trail
+        await blockchain_service.record_access(
+            patient_id=record["patient_id"],
+            accessor_id=str(current_user["_id"]),
+            record_id=record_id,
+            action="download"
+        )
+    
+    if "encrypted_file_data" not in record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File data not found for this record"
+        )
+    
+    try:
+        # encrypted_file_data is already the base64-encoded encrypted data (no double encoding)
+        encrypted_data_str = record["encrypted_file_data"]
+        
+        # Decrypt the file
+        decrypted_content = encryption_service.decrypt_file(
+            encrypted_data_str,
+            record["encryption_iv"]
+        )
+        
+        file_stream = BytesIO(decrypted_content)
+        content_type = record.get("content_type", "application/octet-stream")
+        filename = record.get("filename", f"record_{record_id}")
+        
+        return StreamingResponse(
+            file_stream,
+            media_type=content_type,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+    except Exception as e:
+        print(f"Error decrypting/downloading file: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to decrypt and download file: {str(e)}"
+        ) 
+        # Record access for audit trail
         await blockchain_service.record_access(
             patient_id=record["patient_id"],
             accessor_id=str(current_user["_id"]),
@@ -331,7 +386,6 @@ async def download_record(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to decrypt and download file"
         )
-
 @router.delete("/{record_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_record(
     record_id: str,
