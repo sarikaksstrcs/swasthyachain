@@ -90,7 +90,13 @@ export const MedicalRecords = () => {
           )}
         </div>
       </div>
-
+        {isDoctor && viewingPatientRecords && selectedPatient && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-blue-800">
+                You are viewing and managing records for your patient: <strong>{selectedPatient.full_name} ({selectedPatient.email})</strong>.
+            </p>
+            </div>
+        )}
       {/* Records List */}
       <RecordsList 
         onViewRecord={setSelectedRecord}
