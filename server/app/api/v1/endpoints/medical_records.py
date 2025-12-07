@@ -22,29 +22,75 @@ async def upload_medical_record(
     record_type: str = Form(...),
     title: str = Form(...),
     description: Optional[str] = Form(None),
+    patient_id: Optional[str] = Form(None),  # NEW: Allow doctor to specify patient
     doctor_id: Optional[str] = Form(None),
     hospital_id: Optional[str] = Form(None),
     current_user: dict = Depends(get_current_active_user)
 ):
-    """Upload a new medical record with file"""
+    """Upload a new medical record with file - for both patients and doctors"""
     db = await get_database()
+    
+    # Determine the actual patient ID
+    actual_patient_id = None
+    
+    if current_user["role"] == UserRole.PATIENT.value:
+        # Patients can only upload for themselves
+        actual_patient_id = str(current_user["_id"])
+    elif current_user["role"] == UserRole.DOCTOR.value:
+        # Doctors must specify a patient_id
+        if not patient_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Doctor must specify patient_id when uploading records"
+            )
+        
+        # Verify the patient exists and has had an appointment with this doctor
+        patient = await db.users.find_one({
+            "_id": ObjectId(patient_id),
+            "role": UserRole.PATIENT.value
+        })
+        
+        if not patient:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Patient not found"
+            )
+        
+        # Verify doctor has treated this patient
+        appointment = await db.appointments.find_one({
+            "doctor_id": str(current_user["_id"]),
+            "patient_id": patient_id
+        })
+        
+        if not appointment:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only upload records for patients you have treated"
+            )
+        
+        actual_patient_id = patient_id
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only patients and doctors can upload medical records"
+        )
     
     # Read file content
     file_content = await file.read()
     
-    # Calculate record hash first
+    # Calculate record hash
     record_hash = hashlib.sha256(file_content).hexdigest()
     
-    # Check if this exact file already exists for this user
+    # Check if this exact file already exists for this patient
     existing_record = await db.medical_records.find_one({
-        "patient_id": str(current_user["_id"]),
+        "patient_id": actual_patient_id,
         "record_hash": record_hash
     })
     
     if existing_record:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="This file has already been uploaded. Duplicate files are not allowed."
+            detail="This file has already been uploaded for this patient."
         )
     
     # Encrypt file
@@ -52,33 +98,37 @@ async def upload_medical_record(
     
     # Upload to IPFS
     ipfs_result = await ipfs_service.upload_file(
-        encrypted["encrypted_data"].encode(),
-        file.filename
-    )
+    base64.b64decode(encrypted["encrypted_data"]),  # Decode to bytes for IPFS
+    file.filename
+)
     
     # Record on blockchain
     blockchain_tx = await blockchain_service.record_medical_data(
-        patient_id=str(current_user["_id"]),
+        patient_id=actual_patient_id,
         record_hash=record_hash,
         ipfs_hash=ipfs_result["ipfs_hash"],
         metadata={
             "record_type": record_type,
             "title": title,
-            "filename": file.filename
+            "filename": file.filename,
+            "uploaded_by": str(current_user["_id"]),
+            "uploaded_by_role": current_user["role"]
         }
     )
     
     # Store encrypted file content as base64 in MongoDB
-    encrypted_file_base64 = base64.b64encode(encrypted["encrypted_data"].encode()).decode('utf-8')
+    encrypted_file_base64 = encrypted["encrypted_data"]
     
     # Save to database with file content
     record_dict = {
         "record_type": record_type,
         "title": title,
         "description": description or "",
-        "patient_id": str(current_user["_id"]),
-        "doctor_id": doctor_id or "",
+        "patient_id": actual_patient_id,
+        "doctor_id": doctor_id or (str(current_user["_id"]) if current_user["role"] == UserRole.DOCTOR.value else ""),
         "hospital_id": hospital_id or "",
+        "uploaded_by": str(current_user["_id"]),
+        "uploaded_by_role": current_user["role"],
         "ipfs_hash": ipfs_result["ipfs_hash"],
         "encryption_iv": encrypted["iv"],
         "record_hash": record_hash,
@@ -87,7 +137,7 @@ async def upload_medical_record(
         "filename": file.filename,
         "file_size": len(file_content),
         "content_type": file.content_type or "application/octet-stream",
-        "encrypted_file_data": encrypted_file_base64,  # Store encrypted file
+        "encrypted_file_data": encrypted_file_base64,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow()
     }
@@ -121,7 +171,52 @@ async def get_my_records(current_user: dict = Depends(get_current_active_user)):
     
     async for record in cursor:
         record["id"] = str(record.pop("_id"))
-        # Remove file data from list response
+        if "encrypted_file_data" in record:
+            del record["encrypted_file_data"]
+        records.append(MedicalRecordResponse(**record))
+    
+    return records
+
+@router.get("/patient/{patient_id}", response_model=List[MedicalRecordResponse])
+async def get_patient_records(
+    patient_id: str,
+    current_user: dict = Depends(require_role([UserRole.DOCTOR]))
+):
+    """Get all medical records for a specific patient (doctor only)"""
+    db = await get_database()
+    
+    # Verify patient exists
+    patient = await db.users.find_one({
+        "_id": ObjectId(patient_id),
+        "role": UserRole.PATIENT.value
+    })
+    
+    if not patient:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Patient not found"
+        )
+    
+    # Verify doctor has treated this patient
+    appointment = await db.appointments.find_one({
+        "doctor_id": str(current_user["_id"]),
+        "patient_id": patient_id
+    })
+    
+    if not appointment:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only view records for patients you have treated"
+        )
+    
+    records = []
+    cursor = db.medical_records.find({
+        "patient_id": patient_id,
+        "deleted": {"$ne": True}
+    }).sort("created_at", -1)
+    
+    async for record in cursor:
+        record["id"] = str(record.pop("_id"))
         if "encrypted_file_data" in record:
             del record["encrypted_file_data"]
         records.append(MedicalRecordResponse(**record))
@@ -148,7 +243,6 @@ async def get_record(
     is_patient = str(record["patient_id"]) == str(current_user["_id"])
     
     if not is_patient:
-        # Check consent
         has_consent = await check_consent(
             db, record["patient_id"], str(current_user["_id"])
         )
@@ -158,7 +252,6 @@ async def get_record(
                 detail="No consent to access this record"
             )
         
-        # Log access
         await blockchain_service.record_access(
             patient_id=record["patient_id"],
             accessor_id=str(current_user["_id"]),
@@ -168,7 +261,6 @@ async def get_record(
     
     record["id"] = str(record.pop("_id"))
     
-    # Remove file data from response
     if "encrypted_file_data" in record:
         del record["encrypted_file_data"]
     
@@ -183,28 +275,37 @@ async def download_record(
     db = await get_database()
     
     record = await db.medical_records.find_one({"_id": ObjectId(record_id)})
-    print("Record",record)
+    
     if not record:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Record not found"
         )
     
-    # Check if user is patient or has consent
     is_patient = str(record["patient_id"]) == str(current_user["_id"])
     
     if not is_patient:
-        # Check consent
-        has_consent = await check_consent(
-            db, record["patient_id"], str(current_user["_id"])
-        )
-        if not has_consent:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="No consent to download this record"
-            )
+        # Check if user is a doctor who has treated this patient
+        is_treating_doctor = False
+        if current_user["role"] == UserRole.DOCTOR.value:
+            appointment = await db.appointments.find_one({
+                "doctor_id": str(current_user["_id"]),
+                "patient_id": record["patient_id"]
+            })
+            is_treating_doctor = appointment is not None
         
-        # Log access
+        # If not treating doctor, check for consent
+        if not is_treating_doctor:
+            has_consent = await check_consent(
+                db, record["patient_id"], str(current_user["_id"])
+            )
+            if not has_consent:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="No consent to download this record"
+                )
+        
+        # Record access for audit trail
         await blockchain_service.record_access(
             patient_id=record["patient_id"],
             accessor_id=str(current_user["_id"]),
@@ -212,7 +313,6 @@ async def download_record(
             action="download"
         )
     
-    # Check if file data exists
     if "encrypted_file_data" not in record:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -220,23 +320,59 @@ async def download_record(
         )
     
     try:
-        # Decode base64 encrypted file
-        encrypted_file_bytes = base64.b64decode(record["encrypted_file_data"])
+        # encrypted_file_data is already the base64-encoded encrypted data (no double encoding)
+        encrypted_data_str = record["encrypted_file_data"]
         
-        # Decrypt file
+        # Decrypt the file
+        decrypted_content = encryption_service.decrypt_file(
+            encrypted_data_str,
+            record["encryption_iv"]
+        )
+        
+        file_stream = BytesIO(decrypted_content)
+        content_type = record.get("content_type", "application/octet-stream")
+        filename = record.get("filename", f"record_{record_id}")
+        
+        return StreamingResponse(
+            file_stream,
+            media_type=content_type,
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"'
+            }
+        )
+    except Exception as e:
+        print(f"Error decrypting/downloading file: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to decrypt and download file: {str(e)}"
+        ) 
+        # Record access for audit trail
+        await blockchain_service.record_access(
+            patient_id=record["patient_id"],
+            accessor_id=str(current_user["_id"]),
+            record_id=record_id,
+            action="download"
+        )
+    
+    if "encrypted_file_data" not in record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File data not found for this record"
+        )
+    
+    try:
+        encrypted_file_bytes = base64.b64decode(record["encrypted_file_data"])
         decrypted_content = encryption_service.decrypt_file(
             encrypted_file_bytes.decode('utf-8'),
             record["encryption_iv"]
         )
         
-        # Create file stream
         file_stream = BytesIO(decrypted_content)
-        
-        # Get content type and filename
         content_type = record.get("content_type", "application/octet-stream")
         filename = record.get("filename", f"record_{record_id}")
         
-        # Return streaming response
         return StreamingResponse(
             file_stream,
             media_type=content_type,
@@ -250,7 +386,6 @@ async def download_record(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to decrypt and download file"
         )
-
 @router.delete("/{record_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_record(
     record_id: str,
@@ -267,14 +402,12 @@ async def delete_record(
             detail="Record not found"
         )
     
-    # Check ownership - only the patient who owns the record can delete it
     if str(record["patient_id"]) != str(current_user["_id"]):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to delete this record"
         )
     
-    # Soft delete
     await db.medical_records.update_one(
         {"_id": ObjectId(record_id)},
         {"$set": {"deleted": True, "deleted_at": datetime.utcnow()}}

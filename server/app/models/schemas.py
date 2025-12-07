@@ -83,7 +83,12 @@ class MedicalRecordResponse(BaseModel):
     file_size: Optional[int] = None
     record_hash: Optional[str] = None
     encryption_iv: Optional[str] = None
-    content_type: Optional[str] = None  # ADD THIS
+    content_type: Optional[str] = None
+    
+    # NEW FIELDS - Track who uploaded the record
+    uploaded_by: Optional[str] = None  # User ID of uploader
+    uploaded_by_role: Optional[str] = None  # Role of uploader (patient/doctor)
+    
     created_at: datetime
     updated_at: datetime
     
