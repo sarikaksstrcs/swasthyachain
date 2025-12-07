@@ -3,23 +3,29 @@ import { Lightbulb } from 'lucide-react';
 import { aiService } from '@/services/ai.service';
 import { Card } from '@/components/common/Card';
 import { Spinner } from '@/components/common/Spinner';
+import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 
-export const Recommendations = () => {
+export const Recommendations = ({ patientId = null }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  // Use provided patientId or default to current user
+  const targetPatientId = patientId || user.id;
 
   useEffect(() => {
     fetchRecommendations();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetPatientId]); // Refetch when patient changes
 
   const fetchRecommendations = async () => {
     try {
       setLoading(true);
-      const data = await aiService.getRecommendations();
+      const data = await aiService.getRecommendations(targetPatientId);
       setRecommendations(data.recommendations || []);
     } catch (error) {
-      toast.error('Failed to load recommendations',error);
+      toast.error('Failed to load recommendations', error);
     } finally {
       setLoading(false);
     }

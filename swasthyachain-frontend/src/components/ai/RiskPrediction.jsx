@@ -6,18 +6,21 @@ import { Card } from '@/components/common/Card';
 import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
 
-export const RiskPrediction = () => {
+export const RiskPrediction = ({ patientId = null }) => {
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
 
+  // Use provided patientId or default to current user
+  const targetPatientId = patientId || user.id;
+
   const fetchPrediction = async () => {
     setLoading(true);
     try {
-      const data = await aiService.predictRisks(user.id);
+      const data = await aiService.predictRisks(targetPatientId);
       setPrediction(data);
     } catch (error) {
-      toast.error('Failed to generate risk prediction',error);
+      toast.error('Failed to generate risk prediction', error);
     } finally {
       setLoading(false);
     }
@@ -38,7 +41,7 @@ export const RiskPrediction = () => {
         <div className="text-center py-8">
           <TrendingUp className="h-16 w-16 text-orange-400 mx-auto mb-4" />
           <p className="text-gray-600 mb-4">
-            Analyze your health data to predict potential risks
+            Analyze health data to predict potential risks
           </p>
           <Button onClick={fetchPrediction} loading={loading}>
             Predict Risks

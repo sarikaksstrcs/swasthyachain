@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { Brain, Activity, Pill, AlertCircle, User } from 'lucide-react';
+import { Brain, Activity, Pill, User } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { Card } from '@/components/common/Card';
-import { Spinner } from '@/components/common/Spinner';
 import { useAuth } from '@/hooks/useAuth';
 import toast from 'react-hot-toast';
-import { aiService } from '../../services/ai.service';
+import { aiService } from '@/services/ai.service';
 
 export const HealthSummary = ({ patientId = null, patientName = null }) => {
   const [summary, setSummary] = useState(null);
@@ -32,12 +31,12 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
   return (
     <Card>
       {!summary ? (
-        <div className="p-8 text-center">
-          <Brain className="mx-auto w-16 h-16 text-blue-500 mb-4" />
+        <div className="text-center py-8">
+          <Brain className="h-16 w-16 text-blue-500 mx-auto mb-4" />
           
           {isViewingOtherPatient && patientName && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg inline-flex items-center">
-              <User className="w-4 h-4 text-blue-600 mr-2" />
+            <div className="mb-4 inline-flex items-center px-4 py-2 bg-blue-50 rounded-lg">
+              <User className="h-4 w-4 text-blue-600 mr-2" />
               <span className="text-sm font-medium text-blue-900">
                 Viewing: {patientName}
               </span>
@@ -51,27 +50,18 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
             }
           </p>
 
-          <Button onClick={fetchSummary} disabled={loading}>
-            {loading ? (
-              <>
-                <Spinner size="sm" className="mr-2" />
-                Generating...
-              </>
-            ) : (
-              'Generate Summary'
-            )}
+          <Button onClick={fetchSummary} loading={loading}>
+            Generate Summary
           </Button>
         </div>
       ) : (
-        <div className="p-6">
+        <div>
           {isViewingOtherPatient && patientName && (
-            <div className="mb-6 p-4 bg-blue-50 rounded-lg flex items-center justify-between">
-              <div className="flex items-center">
-                <User className="w-5 h-5 text-blue-600 mr-2" />
-                <div>
-                  <p className="text-sm font-medium text-blue-900">Patient Summary</p>
-                  <p className="text-sm text-blue-700">{patientName}</p>
-                </div>
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg flex items-center">
+              <User className="h-5 w-5 text-blue-600 mr-2" />
+              <div>
+                <p className="text-sm font-medium text-blue-900">Patient Summary</p>
+                <p className="text-sm text-blue-700">{patientName}</p>
               </div>
             </div>
           )}
@@ -79,8 +69,8 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
           {/* Overview Section */}
           <div className="mb-6">
             <div className="flex items-center mb-3">
-              <Brain className="w-5 h-5 text-blue-600 mr-2" />
-              <h3 className="text-lg font-semibold text-gray-900">Overview</h3>
+              <Brain className="h-5 w-5 text-blue-600 mr-2" />
+              <h3 className="text-lg font-semibold">Overview</h3>
             </div>
             <p className="text-gray-700 leading-relaxed">{summary.summary}</p>
           </div>
@@ -89,8 +79,8 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
           {summary.key_conditions && summary.key_conditions.length > 0 && (
             <div className="mb-6">
               <div className="flex items-center mb-3">
-                <Activity className="w-5 h-5 text-red-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">Key Conditions</h3>
+                <Activity className="h-5 w-5 text-red-600 mr-2" />
+                <h3 className="text-lg font-semibold">Key Conditions</h3>
               </div>
               <div className="space-y-2">
                 {summary.key_conditions.map((condition, index) => (
@@ -109,8 +99,8 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
           {summary.medications && summary.medications.length > 0 && (
             <div className="mb-6">
               <div className="flex items-center mb-3">
-                <Pill className="w-5 h-5 text-green-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">Current Medications</h3>
+                <Pill className="h-5 w-5 text-green-600 mr-2" />
+                <h3 className="text-lg font-semibold">Current Medications</h3>
               </div>
               <div className="space-y-2">
                 {summary.medications.map((med, index) => (
@@ -128,7 +118,7 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
           {/* Recommendations */}
           {summary.recommendations && summary.recommendations.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Recommendations</h3>
+              <h3 className="text-lg font-semibold mb-3">Recommendations</h3>
               <div className="space-y-2">
                 {summary.recommendations.map((rec, index) => (
                   <div
@@ -145,15 +135,8 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
             </div>
           )}
 
-          <Button onClick={fetchSummary} variant="secondary" disabled={loading}>
-            {loading ? (
-              <>
-                <Spinner size="sm" className="mr-2" />
-                Refreshing...
-              </>
-            ) : (
-              'Refresh Summary'
-            )}
+          <Button onClick={fetchSummary} loading={loading} variant="secondary" className="w-full">
+            Refresh Summary
           </Button>
         </div>
       )}

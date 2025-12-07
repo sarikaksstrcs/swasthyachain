@@ -3,6 +3,10 @@
 const API_BASE_URL = '/api/v1';
 
 class AIService {
+  /**
+   * Get health summary for a patient
+   * @param {string} patientId - Patient ID (defaults to current user if not provided)
+   */
   async getHealthSummary(patientId) {
     const response = await fetch(`${API_BASE_URL}/ai/health-summary`, {
       method: 'POST',
@@ -21,7 +25,11 @@ class AIService {
     return response.json();
   }
 
-  async getRiskPrediction(patientId, predictionType = 'disease_risk') {
+  /**
+   * Predict health risks for a patient
+   * @param {string} patientId - Patient ID (defaults to current user if not provided)
+   */
+  async predictRisks(patientId) {
     const response = await fetch(`${API_BASE_URL}/ai/predict`, {
       method: 'POST',
       headers: {
@@ -30,7 +38,7 @@ class AIService {
       },
       body: JSON.stringify({ 
         patient_id: patientId,
-        prediction_type: predictionType
+        prediction_type: 'disease_risk'
       })
     });
 
@@ -42,8 +50,17 @@ class AIService {
     return response.json();
   }
 
-  async getRecommendations(patientId) {
-    const response = await fetch(`${API_BASE_URL}/ai/recommendations/${patientId}`, {
+  /**
+   * Get health recommendations for a patient
+   * @param {string} patientId - Patient ID (defaults to current user if not provided)
+   */
+  async getRecommendations(patientId = null) {
+    // If patientId provided, use the patient-specific endpoint
+    const endpoint = patientId 
+      ? `${API_BASE_URL}/ai/recommendations/${patientId}`
+      : `${API_BASE_URL}/ai/recommendations`;
+
+    const response = await fetch(endpoint, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('access_token')}`
       }
