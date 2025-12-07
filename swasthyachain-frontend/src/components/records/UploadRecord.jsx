@@ -32,7 +32,11 @@ export const UploadRecord = ({ onSuccess, onCancel, patientId = null }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    if (!formData.title.trim()) {
+        toast.error('Title is required');
+        return;
+    }
     if (!file) {
       toast.error('Please select a file');
       return;
