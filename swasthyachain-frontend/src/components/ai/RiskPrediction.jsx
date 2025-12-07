@@ -17,7 +17,7 @@ export const RiskPrediction = () => {
       const data = await aiService.predictRisks(user.id);
       setPrediction(data);
     } catch (error) {
-      toast.error('Failed to generate risk prediction');
+      toast.error('Failed to generate risk prediction',error);
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export const RiskPrediction = () => {
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
                 <div
-                  className="bg-primary-600 h-2 rounded-full"
+                  className="bg-blue-600 h-2 rounded-full"
                   style={{ width: `${value.probability * 100}%` }}
                 />
               </div>

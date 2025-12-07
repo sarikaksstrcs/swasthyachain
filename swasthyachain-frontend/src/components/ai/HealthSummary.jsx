@@ -29,7 +29,7 @@ export const HealthSummary = () => {
     <Card title="AI Health Summary">
       {!summary ? (
         <div className="text-center py-8">
-          <Brain className="h-16 w-16 text-primary-400 mx-auto mb-4" />
+          <Brain className="h-16 w-16 text-blue-400 mx-auto mb-4" />
           <p className="text-gray-600 mb-4">
             Generate an AI-powered summary of your health records
           </p>
@@ -41,7 +41,7 @@ export const HealthSummary = () => {
         <div className="space-y-6">
           <div>
             <h3 className="font-semibold mb-2 flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary-600" />
+              <Activity className="h-5 w-5 text-blue-600" />
               Overview
             </h3>
             <p className="text-gray-700">{summary.summary}</p>

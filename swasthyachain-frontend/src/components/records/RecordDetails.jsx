@@ -83,7 +83,7 @@ export const RecordDetails = ({ record, onClose }) => {
       )}
 
       <div className="flex gap-3 pt-4 border-t">
-        <Button variant="primary" className="flex-1">
+        <Button variant="blue" className="flex-1">
           Download
         </Button>
         <Button variant="secondary" className="flex-1">

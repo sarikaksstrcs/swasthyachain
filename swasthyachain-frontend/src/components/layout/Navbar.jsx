@@ -21,7 +21,7 @@ export const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center gap-2">
-            <Activity className="h-8 w-8 text-primary-600" />
+            <Activity className="h-8 w-8 text-blue-600" />
             <span className="text-xl font-bold text-gray-900">SwasthyaChain</span>
           </Link>
 
@@ -29,20 +29,20 @@ export const Navbar = () => {
           <div className="hidden md:flex items-center gap-6">
             {isAuthenticated ? (
               <>
-                <Link to="/dashboard" className="text-gray-700 hover:text-primary-600">
+                <Link to="/dashboard" className="text-gray-700 hover:text-blue-600">
                   Dashboard
                 </Link>
-                <Link to="/medical-records" className="text-gray-700 hover:text-primary-600">
+                <Link to="/medical-records" className="text-gray-700 hover:text-blue-600">
                   Records
                 </Link>
-                <Link to="/consent-management" className="text-gray-700 hover:text-primary-600">
+                <Link to="/consent-management" className="text-gray-700 hover:text-blue-600">
                   Consent
                 </Link>
-                <Link to="/ai-insights" className="text-gray-700 hover:text-primary-600">
+                <Link to="/ai-insights" className="text-gray-700 hover:text-blue-600">
                   AI Insights
                 </Link>
                 <div className="flex items-center gap-3 ml-4 pl-4 border-l">
-                  <Link to="/profile" className="flex items-center gap-2 text-gray-700 hover:text-primary-600">
+                  <Link to="/profile" className="flex items-center gap-2 text-gray-700 hover:text-blue-600">
                     <User className="h-5 w-5" />
                     {user?.full_name}
                   </Link>
@@ -56,10 +56,10 @@ export const Navbar = () => {
               </>
             ) : (
               <>
-                <Link to="/login" className="text-gray-700 hover:text-primary-600">
+                <Link to="/login" className="text-gray-700 hover:text-blue-600">
                   Login
                 </Link>
-                <Link to="/register" className="btn-primary">
+                <Link to="/register" className="btn-blue">
                   Register
                 </Link>
               </>
@@ -80,19 +80,19 @@ export const Navbar = () => {
           <div className="md:hidden py-4 border-t">
             {isAuthenticated ? (
               <>
-                <Link to="/dashboard" className="block py-2 text-gray-700 hover:text-primary-600">
+                <Link to="/dashboard" className="block py-2 text-gray-700 hover:text-blue-600">
                   Dashboard
                 </Link>
-                <Link to="/medical-records" className="block py-2 text-gray-700 hover:text-primary-600">
+                <Link to="/medical-records" className="block py-2 text-gray-700 hover:text-blue-600">
                   Records
                 </Link>
-                <Link to="/consent-management" className="block py-2 text-gray-700 hover:text-primary-600">
+                <Link to="/consent-management" className="block py-2 text-gray-700 hover:text-blue-600">
                   Consent
                 </Link>
-                <Link to="/ai-insights" className="block py-2 text-gray-700 hover:text-primary-600">
+                <Link to="/ai-insights" className="block py-2 text-gray-700 hover:text-blue-600">
                   AI Insights
                 </Link>
-                <Link to="/profile" className="block py-2 text-gray-700 hover:text-primary-600">
+                <Link to="/profile" className="block py-2 text-gray-700 hover:text-blue-600">
                   Profile
                 </Link>
                 <button

@@ -14,12 +14,12 @@ export const Profile = () => {
       <Card>
         <div className="space-y-6">
           <div className="flex items-center gap-4 pb-6 border-b">
-            <div className="h-20 w-20 bg-primary-100 rounded-full flex items-center justify-center">
-              <User className="h-10 w-10 text-primary-600" />
+            <div className="h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center">
+              <User className="h-10 w-10 text-blue-600" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">{user?.full_name}</h2>
-              <span className="px-3 py-1 bg-primary-100 text-primary-800 text-sm font-medium rounded-full capitalize">
+              <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full capitalize">
                 {user?.role}
               </span>
             </div>

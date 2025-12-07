@@ -17,8 +17,8 @@ export const ConsentCard = ({ consent, onApprove, onDeny, onRevoke, isPatient })
     <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-100 rounded-lg">
-            <Shield className="h-6 w-6 text-primary-600" />
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Shield className="h-6 w-6 text-blue-600" />
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">

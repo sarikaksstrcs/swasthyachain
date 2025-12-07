@@ -19,7 +19,7 @@ export const Recommendations = () => {
       const data = await aiService.getRecommendations();
       setRecommendations(data.recommendations || []);
     } catch (error) {
-      toast.error('Failed to load recommendations');
+      toast.error('Failed to load recommendations',error);
     } finally {
       setLoading(false);
     }

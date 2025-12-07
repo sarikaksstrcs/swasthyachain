@@ -98,7 +98,7 @@ export const ConsentRequest = ({ onSuccess, onCancel }) => {
       </div>
 
       <div className="flex gap-3">
-        <Button type="submit" variant="primary" className="flex-1" loading={loading}>
+        <Button type="submit" variant="blue" className="flex-1" loading={loading}>
           Send Request
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel}>

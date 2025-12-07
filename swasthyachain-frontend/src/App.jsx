@@ -7,7 +7,7 @@ import { Footer } from '@/components/layout/Footer';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
 // Pages
-import { Landing } from '@/pages/Landing';
+
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { Dashboard } from '@/pages/Dashboard';
@@ -15,6 +15,9 @@ import { MedicalRecords } from '@/pages/MedicalRecords';
 import { ConsentManagement } from '@/pages/ConsentManagement';
 import { AIInsights } from '@/pages/AIInsights';
 import { Profile } from '@/pages/Profile';
+import { Appointments } from './pages/Appoinments';
+import { Landing } from './pages/Landing';
+
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,6 +68,14 @@ function App() {
                   }
                 />
                 <Route
+                  path="/appointments"
+                  element={
+                    <ProtectedRoute>
+                      <Appointments />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/ai-insights"
                   element={
                     <ProtectedRoute>
@@ -98,14 +109,14 @@ function App() {
               success: {
                 duration: 3000,
                 iconTheme: {
-                  primary: '#10b981',
+                  blue: '#10b981',
                   secondary: '#fff',
                 },
               },
               error: {
                 duration: 4000,
                 iconTheme: {
-                  primary: '#ef4444',
+                  blue: '#ef4444',
                   secondary: '#fff',
                 },
               },
@@ -116,4 +127,5 @@ function App() {
     </QueryClientProvider>
   );
 }
+
 export default App;

@@ -1,7 +1,7 @@
 
 export const Button = ({ 
   children, 
-  variant = 'primary', 
+  variant = 'blue', 
   size = 'md', 
   loading = false,
   disabled = false,
@@ -11,11 +11,11 @@ export const Button = ({
   const baseStyles = 'font-medium rounded-lg transition-all duration-200 flex items-center justify-center gap-2';
   
   const variants = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-primary-300',
+    blue: 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-blue-300',
     secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-800 disabled:bg-gray-100',
     danger: 'bg-red-600 hover:bg-red-700 text-white disabled:bg-red-300',
     success: 'bg-green-600 hover:bg-green-700 text-white disabled:bg-green-300',
-    outline: 'border-2 border-blue-600 text-primary-600 hover:bg-primary-50 disabled:border-blue-300',
+    outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50 disabled:border-blue-300',
   };
   
   const sizes = {

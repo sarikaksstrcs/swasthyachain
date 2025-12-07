@@ -57,7 +57,7 @@ export const UploadRecord = ({ onSuccess, onCancel }) => {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Upload File
         </label>
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary-500 transition-colors">
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
           {file ? (
             <div className="flex items-center justify-between bg-gray-50 p-4 rounded">
               <span className="text-sm text-gray-700">{file.name}</span>
