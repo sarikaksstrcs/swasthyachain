@@ -5,24 +5,32 @@ import { Spinner } from '@/components/common/Spinner';
 import { Alert } from '@/components/common/Alert';
 import toast from 'react-hot-toast';
 
-export const RecordsList = ({ onViewRecord }) => {
+export const RecordsList = ({ onViewRecord, patientId = null }) => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchRecords();
-  }, []);
+  }, [patientId]);
 
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      const data = await recordsService.getMyRecords();
+      
+      // If patientId is provided, fetch that patient's records (doctor view)
+      // Otherwise fetch current user's records
+      const data = patientId 
+        ? await recordsService.getPatientRecords(patientId)
+        : await recordsService.getMyRecords();
+      
       setRecords(data);
       setError(null);
     } catch (err) {
-      setError('Failed to fetch medical records',err);
-      toast.error('Failed to load records');
+      const errorMessage = err.response?.data?.detail || 'Failed to fetch medical records';
+      setError(errorMessage);
+      toast.error(errorMessage);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -36,20 +44,41 @@ export const RecordsList = ({ onViewRecord }) => {
       setRecords(records.filter(r => r.id !== id));
       toast.success('Record deleted successfully');
     } catch (err) {
-      toast.error('Failed to delete record',err);
+      const errorMessage = err.response?.data?.detail || 'Failed to delete record';
+      toast.error(errorMessage);
+      console.error(err);
     }
   };
 
-  if (loading) return <Spinner size="lg" className="my-8" />;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Spinner size="lg" />
+        <span className="ml-3 text-gray-600">Loading records...</span>
+      </div>
+    );
+  }
   
-  if (error) return <Alert type="error" message={error} />;
+  if (error) {
+    return (
+      <Alert 
+        type="error" 
+        title="Error Loading Records"
+        message={error} 
+      />
+    );
+  }
 
   if (records.length === 0) {
     return (
       <Alert
         type="info"
         title="No Records Found"
-        message="You haven't uploaded any medical records yet. Click the upload button to add your first record."
+        message={
+          patientId 
+            ? "This patient doesn't have any medical records yet."
+            : "You haven't uploaded any medical records yet. Click the upload button to add your first record."
+        }
       />
     );
   }
@@ -62,6 +91,7 @@ export const RecordsList = ({ onViewRecord }) => {
           record={record}
           onView={onViewRecord}
           onDelete={handleDelete}
+          hideDelete={!!patientId}
         />
       ))}
     </div>

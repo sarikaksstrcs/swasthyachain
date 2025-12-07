@@ -1,56 +1,74 @@
-import { FileText, Calendar, Eye, Trash2 } from 'lucide-react';
-import { formatDate, getRecordTypeLabel } from '@/utils/helpers';
+import { FileText, Calendar, Download, Eye, Trash2, Shield } from 'lucide-react';
+import { formatDateTime, getRecordTypeLabel } from '@/utils/helpers';
 import { Button } from '@/components/common/Button';
 
-export const RecordCard = ({ record, onView, onDelete }) => {
+export const RecordCard = ({ record, onView, onDelete, hideDelete = false }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
+      {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <FileText className="h-6 w-6 text-blue-600" />
+          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <FileText className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">{record.title}</h3>
-            <p className="text-sm text-gray-600">
-              {getRecordTypeLabel(record.record_type)}
-            </p>
+            <h3 className="font-semibold text-gray-900 line-clamp-1">{record.title}</h3>
+            <p className="text-sm text-gray-500">{getRecordTypeLabel(record.record_type)}</p>
           </div>
         </div>
-        <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-          {record.encrypted ? 'Encrypted' : 'Unencrypted'}
-        </span>
+        {record.encrypted && (
+          <div className="flex items-center gap-1 text-green-600" title="Encrypted">
+            <Shield className="h-4 w-4" />
+          </div>
+        )}
       </div>
 
+      {/* Description */}
       {record.description && (
         <p className="text-sm text-gray-600 mb-4 line-clamp-2">
           {record.description}
         </p>
       )}
 
-      <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-        <div className="flex items-center gap-1">
+      {/* Metadata */}
+      <div className="space-y-2 mb-4 text-sm text-gray-500">
+        <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4" />
-          {formatDate(record.created_at)}
+          <span>{formatDateTime(record.created_at)}</span>
         </div>
+        {record.filename && (
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            <span className="truncate">{record.filename}</span>
+          </div>
+        )}
+        {record.file_size && (
+          <div className="text-xs text-gray-400">
+            Size: {(record.file_size / 1024).toFixed(2)} KB
+          </div>
+        )}
       </div>
 
-      <div className="flex gap-2">
+      {/* Actions */}
+      <div className="flex gap-2 pt-4 border-t border-gray-200">
         <Button
+          variant="blue"
           size="sm"
-          onClick={() => onView(record)}
           className="flex-1"
+          onClick={() => onView(record)}
         >
-          <Eye className="h-4 w-4" />
+          <Eye className="h-4 w-4 mr-1" />
           View
         </Button>
-        <Button
-          size="sm"
-          variant="danger"
-          onClick={() => onDelete(record.id)}
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {!hideDelete && (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => onDelete(record.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );
