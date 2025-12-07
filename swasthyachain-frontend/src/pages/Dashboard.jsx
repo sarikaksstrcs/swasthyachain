@@ -227,7 +227,7 @@ export const Dashboard = () => {
                     <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500 mb-4">No upcoming appointments</p>
                     <Link 
-                      to="/appointments/book" 
+                      to="/appointments" 
                       className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                     >
                       Book Your First Appointment
@@ -326,7 +326,7 @@ export const Dashboard = () => {
                     <p className="text-gray-500 mb-2">No appointments scheduled for today</p>
                     <p className="text-sm text-gray-400 mb-4">Set your availability to allow patients to book appointments</p>
                     <Link 
-                      to="/appointments/availability" 
+                      to="/appointments" 
                       className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                     >
                       Set Availability
