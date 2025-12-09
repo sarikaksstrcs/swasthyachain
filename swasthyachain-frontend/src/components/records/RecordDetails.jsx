@@ -5,7 +5,7 @@ import { Button } from '@/components/common/Button';
 import { recordsService } from '@/services/records.service';
 import toast from 'react-hot-toast';
 
-export const RecordDetails = ({ record, onClose }) => {
+export const RecordDetails = ({ record }) => {
   const [downloading, setDownloading] = useState(false);
 
   if (!record) return null;
