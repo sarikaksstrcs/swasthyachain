@@ -26,7 +26,7 @@ export const ConsentList = () => {
       setConsents(data);
       setError(null);
     } catch (err) {
-      setError('Failed to fetch consents');
+      setError('Failed to fetch consents',err);
       toast.error('Failed to load consents');
     } finally {
       setLoading(false);
@@ -39,7 +39,7 @@ export const ConsentList = () => {
       toast.success('Consent approved');
       fetchConsents();
     } catch (err) {
-      toast.error('Failed to approve consent');
+      toast.error('Failed to approve consent',err);
     }
   };
 
@@ -49,7 +49,7 @@ export const ConsentList = () => {
       toast.success('Consent denied');
       fetchConsents();
     } catch (err) {
-      toast.error('Failed to deny consent');
+      toast.error('Failed to deny consent',err);
     }
   };
 
@@ -61,7 +61,7 @@ export const ConsentList = () => {
       toast.success('Consent revoked');
       fetchConsents();
     } catch (err) {
-      toast.error('Failed to revoke consent');
+      toast.error('Failed to revoke consent',err);
     }
   };
 

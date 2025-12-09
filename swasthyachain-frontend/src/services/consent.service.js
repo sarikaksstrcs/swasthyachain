@@ -29,4 +29,8 @@ export const consentService = {
   revokeConsent: async (id) => {
     await api.delete(`/consent/${id}/revoke`);
   },
+  getPatientRecords: async (doctorId) => {
+    const response = await api.get(`/consent/patient-records/${doctorId}`);
+    return response.data;
+  }
 };

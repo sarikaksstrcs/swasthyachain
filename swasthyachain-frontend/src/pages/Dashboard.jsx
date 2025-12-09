@@ -6,19 +6,68 @@ import { Card } from '../components/common/Card';
 
 import toast from 'react-hot-toast';
 import { appointmentService } from '../services/appoinment.service';
+import { consentService } from '../services/consent.service';
+import { recordsService } from '../services/records.service';
 
 export const Dashboard = () => {
   const { user } = useAuth();
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
- 
+  const [consents, setConsents] = useState([]);
+  const [records, setRecords] = useState([]);
+  const [recordCount,setRecordCount]=useState(0);
+  const[approvedConsntCount,setApprovedConsentCount]=useState(0);
+
+  const isDoctor = user?.role === 'doctor';
 
   useEffect(() => {
     if (user) {
       fetchAppointments();
+      fetchConsents();
+      fetchRecords();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useEffect(() => {
+    let count = consents.filter(c => c.status === 'approved').length;
+    setApprovedConsentCount(count);
+  }, [consents]);
+
+  useEffect(() => {
+    let count = records.length;
+    setRecordCount(count);
+  }, [records]);
+
+  const fetchConsents = async () => {
+    try {
+      setLoading(true);
+      const data =  await consentService.getMyConsents();
+      setConsents(data);
+    } catch (err) {
+      toast.error('Failed to load consents',err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRecords = async () => {
+    try {
+      setLoading(true);
+      
+      const data = await recordsService.getMyRecords();
+    
+      
+      setRecords(data);
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || 'Failed to fetch medical records';
+      toast.error(errorMessage);
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchAppointments = async () => {
     setLoading(true);
@@ -70,14 +119,14 @@ export const Dashboard = () => {
         {
           icon: FileText,
           label: 'Patient Records',
-          value: '45', // This would come from records API
+          value: recordCount.toString(), 
           color: 'bg-green-100 text-green-600',
           link: '/medical-records',
         },
         {
           icon: Shield,
           label: 'Active Consents',
-          value: '12', // This would come from consent API
+          value: approvedConsntCount, // This would come from consent API
           color: 'bg-purple-100 text-purple-600',
           link: '/consent-management',
         },

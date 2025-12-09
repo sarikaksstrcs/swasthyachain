@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from app.models.schemas import (
     ConsentRequest, ConsentResponse, ConsentUpdate, 
-    ConsentStatus, UserRole
+    ConsentStatus, UserRole, MedicalRecordResponse
 )
 from app.core.security import get_current_active_user, require_role
 from app.core.database import get_database
@@ -234,3 +234,37 @@ async def get_my_consents(
         consents.append(ConsentResponse(**consent))
     
     return consents
+
+@router.get("/patient-records/{doctor_id}", response_model=List[MedicalRecordResponse])
+async def get_patient_records_by_doctor(
+    doctor_id: str,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """Get all patient records associated with a specific doctor"""
+    db = await get_database()
+    
+    # Verify the requesting user is the doctor or has appropriate permissions
+    if current_user["role"] not in [UserRole.DOCTOR, UserRole.ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only doctors and admins can access this endpoint"
+        )
+    
+    # If user is a doctor, ensure they're requesting their own records
+    if current_user["role"] == UserRole.DOCTOR and str(current_user["_id"]) != doctor_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Doctors can only access their own patient records"
+        )
+    
+    # Query medical records where doctor_id matches
+    records = []
+    cursor = db.medical_records.find({
+        "doctor_id": doctor_id
+    }).sort("created_at", -1)
+    
+    async for record in cursor:
+        record["id"] = str(record.pop("_id"))
+        records.append(MedicalRecordResponse(**record))
+    
+    return records
