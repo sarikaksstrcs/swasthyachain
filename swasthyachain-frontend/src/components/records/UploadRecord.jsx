@@ -1,17 +1,17 @@
-import { useState } from 'react';
-import { Upload, X } from 'lucide-react';
-import { recordsService } from '@/services/records.service';
-import { Button } from '@/components/common/Button';
-import { Input } from '@/components/common/Input';
-import { RECORD_TYPES } from '@/utils/constants';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { Upload, X } from "lucide-react";
+import { recordsService } from "@/services/records.service";
+import { Button } from "@/components/common/Button";
+import { Input } from "@/components/common/Input";
+import { RECORD_TYPES } from "@/utils/constants";
+import toast from "react-hot-toast";
 
 export const UploadRecord = ({ onSuccess, onCancel, patientId = null }) => {
   const [file, setFile] = useState(null);
   const [formData, setFormData] = useState({
     record_type: RECORD_TYPES.LAB_REPORT,
-    title: '',
-    description: '',
+    title: "",
+    description: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +19,7 @@ export const UploadRecord = ({ onSuccess, onCancel, patientId = null }) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       if (selectedFile.size > 50 * 1024 * 1024) {
-        toast.error('File size must be less than 50MB');
+        toast.error("File size must be less than 50MB");
         return;
       }
       setFile(selectedFile);
@@ -34,32 +34,32 @@ export const UploadRecord = ({ onSuccess, onCancel, patientId = null }) => {
     e.preventDefault();
 
     if (!formData.title.trim()) {
-        toast.error('Title is required');
-        return;
+      toast.error("Title is required");
+      return;
     }
     if (!file) {
-      toast.error('Please select a file');
+      toast.error("Please select a file");
       return;
     }
 
     setLoading(true);
     try {
       const uploadData = { ...formData };
-      
+
       // If patientId is provided, add it to the upload data
       if (patientId) {
         uploadData.patient_id = patientId;
       }
-      
+
       await recordsService.uploadRecord(file, uploadData);
       toast.success(
-        patientId 
-          ? 'Record uploaded successfully for patient!' 
-          : 'Record uploaded successfully!'
+        patientId
+          ? "Record uploaded successfully for patient!"
+          : "Record uploaded successfully!",
       );
       onSuccess();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Failed to upload record');
+      toast.error(error.response?.data?.detail || "Failed to upload record");
       console.error(error);
     } finally {
       setLoading(false);
@@ -71,8 +71,8 @@ export const UploadRecord = ({ onSuccess, onCancel, patientId = null }) => {
       {patientId && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-800">
-            <strong>Note:</strong> You are uploading this record for your patient. 
-            They will be able to view and manage it in their records.
+            <strong>Note:</strong> You are uploading this record for your
+            patient. They will be able to view and manage it in their records.
           </p>
         </div>
       )}
@@ -128,7 +128,9 @@ export const UploadRecord = ({ onSuccess, onCancel, patientId = null }) => {
           <option value={RECORD_TYPES.PRESCRIPTION}>Prescription</option>
           <option value={RECORD_TYPES.IMAGING}>Medical Imaging</option>
           <option value={RECORD_TYPES.CONSULTATION}>Consultation Notes</option>
-          <option value={RECORD_TYPES.DISCHARGE_SUMMARY}>Discharge Summary</option>
+          <option value={RECORD_TYPES.DISCHARGE_SUMMARY}>
+            Discharge Summary
+          </option>
         </select>
       </div>
 

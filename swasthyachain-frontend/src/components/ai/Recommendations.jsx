@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
-import { Lightbulb } from 'lucide-react';
-import { aiService } from '@/services/ai.service';
-import { Card } from '@/components/common/Card';
-import { Spinner } from '@/components/common/Spinner';
-import { useAuth } from '@/hooks/useAuth';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { Lightbulb } from "lucide-react";
+import { aiService } from "@/services/ai.service";
+import { Card } from "@/components/common/Card";
+import { Spinner } from "@/components/common/Spinner";
+import { useAuth } from "@/hooks/useAuth";
+import toast from "react-hot-toast";
 
 export const Recommendations = ({ patientId = null }) => {
   const [recommendations, setRecommendations] = useState([]);
@@ -25,7 +25,7 @@ export const Recommendations = ({ patientId = null }) => {
       const data = await aiService.getRecommendations(targetPatientId);
       setRecommendations(data.recommendations || []);
     } catch (error) {
-      toast.error('Failed to load recommendations', error);
+      toast.error("Failed to load recommendations", error);
     } finally {
       setLoading(false);
     }
@@ -38,7 +38,10 @@ export const Recommendations = ({ patientId = null }) => {
       ) : recommendations.length > 0 ? (
         <ul className="space-y-3">
           {recommendations.map((rec, index) => (
-            <li key={index} className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+            <li
+              key={index}
+              className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg"
+            >
               <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
               <span className="text-gray-700">{rec}</span>
             </li>
@@ -46,7 +49,8 @@ export const Recommendations = ({ patientId = null }) => {
         </ul>
       ) : (
         <p className="text-gray-600 text-center py-8">
-          No recommendations available yet. Upload more medical records to get personalized insights.
+          No recommendations available yet. Upload more medical records to get
+          personalized insights.
         </p>
       )}
     </Card>

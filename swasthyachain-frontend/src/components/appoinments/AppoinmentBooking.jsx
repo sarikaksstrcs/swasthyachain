@@ -1,19 +1,24 @@
-import { useState, useEffect } from 'react';
-import { Calendar, Clock, User, Stethoscope, Search, CheckCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { appointmentService } from '../../services/appoinment.service';
-
+import { useState, useEffect } from "react";
+import {
+  Calendar,
+  Clock,
+  User,
+  Stethoscope,
+  Search,
+  CheckCircle,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { appointmentService } from "../../services/appoinment.service";
 
 export const AppointmentBooking = () => {
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [reason, setReason] = useState('');
-  const [notes, setNotes] = useState('');
+  const [reason, setReason] = useState("");
+  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchDoctors();
@@ -30,32 +35,32 @@ export const AppointmentBooking = () => {
       const data = await appointmentService.getDoctors();
       setDoctors(data);
     } catch (error) {
-      toast.error('Failed to load doctors');
+      toast.error("Failed to load doctors");
       console.error(error);
     }
   };
 
   const fetchAvailableSlots = async (doctorId) => {
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split("T")[0];
       const nextMonth = new Date();
       nextMonth.setMonth(nextMonth.getMonth() + 1);
-      
+
       const data = await appointmentService.getDoctorAvailability(
         doctorId,
         today,
-        nextMonth.toISOString().split('T')[0]
+        nextMonth.toISOString().split("T")[0],
       );
       setAvailableSlots(data);
     } catch (error) {
-      toast.error('Failed to load available slots');
+      toast.error("Failed to load available slots");
       console.error(error);
     }
   };
 
   const handleBookAppointment = async () => {
     if (!selectedSlot || !reason.trim()) {
-      toast.error('Please select a slot and provide a reason');
+      toast.error("Please select a slot and provide a reason");
       return;
     }
 
@@ -65,16 +70,17 @@ export const AppointmentBooking = () => {
         doctor_id: selectedDoctor.id,
         slot_id: selectedSlot.id,
         reason,
-        notes
+        notes,
       });
 
-      toast.success('Appointment booked successfully!');
+      toast.success("Appointment booked successfully!");
       setSelectedDoctor(null);
       setSelectedSlot(null);
-      setReason('');
-      setNotes('');
+      setReason("");
+      setNotes("");
     } catch (error) {
-      const errorMsg = error.response?.data?.detail || 'Failed to book appointment';
+      const errorMsg =
+        error.response?.data?.detail || "Failed to book appointment";
       toast.error(errorMsg);
       console.error(error);
     } finally {
@@ -82,9 +88,10 @@ export const AppointmentBooking = () => {
     }
   };
 
-  const filteredDoctors = doctors.filter(doc =>
-    doc.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.specialization.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredDoctors = doctors.filter(
+    (doc) =>
+      doc.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doc.specialization.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -101,7 +108,7 @@ export const AppointmentBooking = () => {
             <User className="h-5 w-5" />
             Step 1: Select a Doctor
           </h2>
-          
+
           <div className="mb-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -122,8 +129,8 @@ export const AppointmentBooking = () => {
                 onClick={() => setSelectedDoctor(doctor)}
                 className={`p-4 border-2 rounded-lg text-left transition-all ${
                   selectedDoctor?.id === doctor.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-blue-300'
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-blue-300"
                 }`}
               >
                 <div className="flex items-start gap-3">
@@ -131,10 +138,16 @@ export const AppointmentBooking = () => {
                     <Stethoscope className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{doctor.full_name}</h3>
-                    <p className="text-sm text-gray-600">{doctor.specialization}</p>
+                    <h3 className="font-semibold text-gray-900">
+                      {doctor.full_name}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {doctor.specialization}
+                    </p>
                     {doctor.phone && (
-                      <p className="text-xs text-gray-500 mt-1">{doctor.phone}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {doctor.phone}
+                      </p>
                     )}
                   </div>
                   {selectedDoctor?.id === doctor.id && (
@@ -153,7 +166,7 @@ export const AppointmentBooking = () => {
               <Clock className="h-5 w-5" />
               Step 2: Select a Time Slot
             </h2>
-            
+
             {availableSlots.length === 0 ? (
               <p className="text-gray-500 text-center py-8">
                 No available slots for this doctor in the next month
@@ -166,9 +179,12 @@ export const AppointmentBooking = () => {
                     if (!acc[date]) acc[date] = [];
                     acc[date].push(slot);
                     return acc;
-                  }, {})
+                  }, {}),
                 ).map(([date, slots]) => (
-                  <div key={date} className="border border-gray-200 rounded-lg p-4">
+                  <div
+                    key={date}
+                    className="border border-gray-200 rounded-lg p-4"
+                  >
                     <h3 className="font-medium text-gray-900 mb-3">
                       {appointmentService.formatDate(date)}
                     </h3>
@@ -179,8 +195,8 @@ export const AppointmentBooking = () => {
                           onClick={() => setSelectedSlot(slot)}
                           className={`px-3 py-2 rounded-md text-sm font-medium transition-all ${
                             selectedSlot?.id === slot.id
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              ? "bg-blue-600 text-white"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                           }`}
                         >
                           {appointmentService.formatTime(slot.start_time)}
@@ -197,8 +213,10 @@ export const AppointmentBooking = () => {
         {/* Step 3: Provide Details */}
         {selectedSlot && (
           <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4">Step 3: Appointment Details</h2>
-            
+            <h2 className="text-xl font-semibold mb-4">
+              Step 3: Appointment Details
+            </h2>
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -233,12 +251,25 @@ export const AppointmentBooking = () => {
         {/* Book Button */}
         {selectedSlot && (
           <div className="bg-gray-50 rounded-lg p-4 mb-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Appointment Summary</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">
+              Appointment Summary
+            </h3>
             <div className="text-sm text-gray-600 space-y-1">
-              <p><strong>Doctor:</strong> {selectedDoctor.full_name}</p>
-              <p><strong>Specialization:</strong> {selectedDoctor.specialization}</p>
-              <p><strong>Date:</strong> {appointmentService.formatDate(selectedSlot.date)}</p>
-              <p><strong>Time:</strong> {appointmentService.formatTime(selectedSlot.start_time)} - {appointmentService.formatTime(selectedSlot.end_time)}</p>
+              <p>
+                <strong>Doctor:</strong> {selectedDoctor.full_name}
+              </p>
+              <p>
+                <strong>Specialization:</strong> {selectedDoctor.specialization}
+              </p>
+              <p>
+                <strong>Date:</strong>{" "}
+                {appointmentService.formatDate(selectedSlot.date)}
+              </p>
+              <p>
+                <strong>Time:</strong>{" "}
+                {appointmentService.formatTime(selectedSlot.start_time)} -{" "}
+                {appointmentService.formatTime(selectedSlot.end_time)}
+              </p>
             </div>
           </div>
         )}

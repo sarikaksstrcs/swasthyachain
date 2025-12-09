@@ -1,10 +1,9 @@
-
 // =============================================
 // src/components/auth/ProtectedRoute.jsx
 // =============================================
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { Spinner } from '@/components/common/Spinner';
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { Spinner } from "@/components/common/Spinner";
 
 export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const { isAuthenticated, loading, user } = useAuth();

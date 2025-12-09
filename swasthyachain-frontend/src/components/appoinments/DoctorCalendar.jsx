@@ -1,8 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, Clock, User, X } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { appointmentService } from '../../services/appoinment.service';
-
+import { useState, useEffect } from "react";
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  User,
+  X,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { appointmentService } from "../../services/appoinment.service";
 
 export const DoctorCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -21,15 +27,18 @@ export const DoctorCalendar = () => {
 
   const fetchMonthAppointments = async () => {
     try {
-      const data = await appointmentService.getMonthAppointments(year, month + 1);
-      
+      const data = await appointmentService.getMonthAppointments(
+        year,
+        month + 1,
+      );
+
       const counts = {};
-      data.forEach(item => {
-        counts[item.date.split('T')[0]] = item.count;
+      data.forEach((item) => {
+        counts[item.date.split("T")[0]] = item.count;
       });
       setAppointmentCounts(counts);
     } catch (error) {
-      toast.error('Failed to load appointments');
+      toast.error("Failed to load appointments");
       console.error(error);
     }
   };
@@ -37,13 +46,13 @@ export const DoctorCalendar = () => {
   const fetchDayAppointments = async (date) => {
     setLoading(true);
     try {
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = date.toISOString().split("T")[0];
       const data = await appointmentService.getDayAppointments(dateStr);
       setDayAppointments(data);
       setSelectedDate(date);
       setShowDetailsModal(true);
     } catch (error) {
-      toast.error('Failed to load day appointments');
+      toast.error("Failed to load day appointments");
       console.error(error);
     } finally {
       setLoading(false);
@@ -53,11 +62,11 @@ export const DoctorCalendar = () => {
   const updateAppointmentStatus = async (appointmentId, status) => {
     try {
       await appointmentService.updateAppointmentStatus(appointmentId, status);
-      toast.success('Appointment updated');
+      toast.success("Appointment updated");
       fetchDayAppointments(selectedDate);
       fetchMonthAppointments();
     } catch (error) {
-      toast.error('Failed to update appointment');
+      toast.error("Failed to update appointment");
       console.error(error);
     }
   };
@@ -83,14 +92,25 @@ export const DoctorCalendar = () => {
   };
 
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
   const today = new Date();
-  const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
+  const isCurrentMonth =
+    today.getMonth() === month && today.getFullYear() === year;
 
   const calendarDays = [];
   for (let i = 0; i < firstDay; i++) {
@@ -125,11 +145,11 @@ export const DoctorCalendar = () => {
           >
             <ChevronLeft className="h-6 w-6" />
           </button>
-          
+
           <h2 className="text-2xl font-semibold">
             {monthNames[month]} {year}
           </h2>
-          
+
           <button
             onClick={nextMonth}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -140,19 +160,22 @@ export const DoctorCalendar = () => {
 
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-2">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-center font-semibold text-gray-600 py-2">
+          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+            <div
+              key={day}
+              className="text-center font-semibold text-gray-600 py-2"
+            >
               {day}
             </div>
           ))}
-          
+
           {calendarDays.map((day, index) => {
             if (!day) {
               return <div key={`empty-${index}`} className="aspect-square" />;
             }
 
             const date = new Date(year, month, day);
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = date.toISOString().split("T")[0];
             const appointmentCount = appointmentCounts[dateStr] || 0;
             const isToday = isCurrentMonth && day === today.getDate();
             const isPast = date < new Date(today.setHours(0, 0, 0, 0));
@@ -164,14 +187,16 @@ export const DoctorCalendar = () => {
                 disabled={isPast}
                 className={`aspect-square border rounded-lg p-2 transition-all ${
                   isToday
-                    ? 'border-blue-500 bg-blue-50'
+                    ? "border-blue-500 bg-blue-50"
                     : appointmentCount > 0
-                    ? 'border-green-300 bg-green-50 hover:bg-green-100'
-                    : 'border-gray-200 hover:bg-gray-50'
-                } ${isPast ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+                      ? "border-green-300 bg-green-50 hover:bg-green-100"
+                      : "border-gray-200 hover:bg-gray-50"
+                } ${isPast ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}
               >
                 <div className="flex flex-col h-full">
-                  <span className={`text-sm font-medium ${isToday ? 'text-blue-600' : ''}`}>
+                  <span
+                    className={`text-sm font-medium ${isToday ? "text-blue-600" : ""}`}
+                  >
                     {day}
                   </span>
                   {appointmentCount > 0 && (
@@ -232,7 +257,13 @@ export const DoctorCalendar = () => {
                               </h3>
                               <div className="flex items-center gap-2 text-sm text-gray-600">
                                 <Clock className="h-4 w-4" />
-                                {appointmentService.formatTime(appointment.start_time)} - {appointmentService.formatTime(appointment.end_time)}
+                                {appointmentService.formatTime(
+                                  appointment.start_time,
+                                )}{" "}
+                                -{" "}
+                                {appointmentService.formatTime(
+                                  appointment.end_time,
+                                )}
                               </div>
                             </div>
                           </div>
@@ -250,35 +281,57 @@ export const DoctorCalendar = () => {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${appointmentService.getStatusColor(appointment.status)}`}>
+                          <span
+                            className={`px-3 py-1 rounded-full text-xs font-semibold ${appointmentService.getStatusColor(appointment.status)}`}
+                          >
                             {appointment.status}
                           </span>
-                          
-                          {appointment.status === 'scheduled' && (
+
+                          {appointment.status === "scheduled" && (
                             <div className="flex flex-col gap-1">
                               <button
-                                onClick={() => updateAppointmentStatus(appointment.id, 'confirmed')}
+                                onClick={() =>
+                                  updateAppointmentStatus(
+                                    appointment.id,
+                                    "confirmed",
+                                  )
+                                }
                                 className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
                               >
                                 Confirm
                               </button>
                               <button
-                                onClick={() => updateAppointmentStatus(appointment.id, 'cancelled')}
+                                onClick={() =>
+                                  updateAppointmentStatus(
+                                    appointment.id,
+                                    "cancelled",
+                                  )
+                                }
                                 className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
                               >
                                 Cancel
                               </button>
                             </div>
                           )}
-                          
-                          {appointment.status === 'confirmed' && new Date(new Date().toISOString().slice(0, 10) + 'T' + appointment.end_time) < new Date()&&(
-                            <button
-                              onClick={() => updateAppointmentStatus(appointment.id, 'completed')}
-                              className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
-                            >
-                              Complete
-                            </button>
-                          )}
+
+                          {appointment.status === "confirmed" &&
+                            new Date(
+                              new Date().toISOString().slice(0, 10) +
+                                "T" +
+                                appointment.end_time,
+                            ) < new Date() && (
+                              <button
+                                onClick={() =>
+                                  updateAppointmentStatus(
+                                    appointment.id,
+                                    "completed",
+                                  )
+                                }
+                                className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                              >
+                                Complete
+                              </button>
+                            )}
                         </div>
                       </div>
                     </div>

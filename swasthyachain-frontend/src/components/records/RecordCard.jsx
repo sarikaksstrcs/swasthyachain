@@ -1,8 +1,20 @@
-import { FileText, Calendar, Download, Eye, Trash2, Shield } from 'lucide-react';
-import { formatDateTime, getRecordTypeLabel } from '@/utils/helpers';
-import { Button } from '@/components/common/Button';
+import {
+  FileText,
+  Calendar,
+  Download,
+  Eye,
+  Trash2,
+  Shield,
+} from "lucide-react";
+import { formatDateTime, getRecordTypeLabel } from "@/utils/helpers";
+import { Button } from "@/components/common/Button";
 
-export const RecordCard = ({ record, onView, onDelete, hideDelete = false }) => {
+export const RecordCard = ({
+  record,
+  onView,
+  onDelete,
+  hideDelete = false,
+}) => {
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-6 border border-gray-200">
       {/* Header */}
@@ -12,12 +24,19 @@ export const RecordCard = ({ record, onView, onDelete, hideDelete = false }) => 
             <FileText className="h-5 w-5 text-blue-600" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 line-clamp-1">{record.title}</h3>
-            <p className="text-sm text-gray-500">{getRecordTypeLabel(record.record_type)}</p>
+            <h3 className="font-semibold text-gray-900 line-clamp-1">
+              {record.title}
+            </h3>
+            <p className="text-sm text-gray-500">
+              {getRecordTypeLabel(record.record_type)}
+            </p>
           </div>
         </div>
         {record.encrypted && (
-          <div className="flex items-center gap-1 text-green-600" title="Encrypted">
+          <div
+            className="flex items-center gap-1 text-green-600"
+            title="Encrypted"
+          >
             <Shield className="h-4 w-4" />
           </div>
         )}

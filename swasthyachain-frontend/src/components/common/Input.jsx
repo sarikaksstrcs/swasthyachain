@@ -1,14 +1,13 @@
-
 // =============================================
 // src/components/common/Input.jsx
 // =============================================
-export const Input = ({ 
-  label, 
-  error, 
-  type = 'text',
+export const Input = ({
+  label,
+  error,
+  type = "text",
   icon: Icon,
-  className = '',
-  ...props 
+  className = "",
+  ...props
 }) => {
   return (
     <div className={`mb-4 ${className}`}>
@@ -25,8 +24,8 @@ export const Input = ({
         )}
         <input
           type={type}
-          className={`w-full pt-2 input-field ${Icon ? 'pl-10' : ''} ${
-            error ? 'border-red-500 focus:ring-red-500' : ''
+          className={`w-full pt-2 input-field ${Icon ? "pl-10" : ""} ${
+            error ? "border-red-500 focus:ring-red-500" : ""
           }`}
           {...props}
         />

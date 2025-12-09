@@ -1,18 +1,18 @@
-import { useState } from 'react';
-import { consentService } from '@/services/consent.service';
-import { Button } from '@/components/common/Button';
-import { Input } from '@/components/common/Input';
-import { ACCESS_TYPES } from '@/utils/constants';
-import { useAuth } from '@/hooks/useAuth';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { consentService } from "@/services/consent.service";
+import { Button } from "@/components/common/Button";
+import { Input } from "@/components/common/Input";
+import { ACCESS_TYPES } from "@/utils/constants";
+import { useAuth } from "@/hooks/useAuth";
+import toast from "react-hot-toast";
 
 export const ConsentRequest = ({ onSuccess, onCancel }) => {
   const { user } = useAuth();
   const [formData, setFormData] = useState({
-    patient_email: '',
+    patient_email: "",
     access_type: ACCESS_TYPES.READ,
     duration_hours: 24,
-    reason: '',
+    reason: "",
   });
   const [loading, setLoading] = useState(false);
 
@@ -23,19 +23,19 @@ export const ConsentRequest = ({ onSuccess, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       // Include doctor_id from authenticated user
       const requestData = {
         ...formData,
         doctor_id: user.id, // or user.user_id depending on your auth structure
       };
-      
+
       await consentService.requestConsent(requestData);
-      toast.success('Consent request sent successfully!');
+      toast.success("Consent request sent successfully!");
       onSuccess();
     } catch (error) {
-      toast.error('Failed to send consent request');
+      toast.error("Failed to send consent request");
       console.error(error);
     } finally {
       setLoading(false);
@@ -98,7 +98,12 @@ export const ConsentRequest = ({ onSuccess, onCancel }) => {
       </div>
 
       <div className="flex gap-3">
-        <Button type="submit" variant="blue" className="flex-1" loading={loading}>
+        <Button
+          type="submit"
+          variant="blue"
+          className="flex-1"
+          loading={loading}
+        >
           Send Request
         </Button>
         <Button type="button" variant="secondary" onClick={onCancel}>

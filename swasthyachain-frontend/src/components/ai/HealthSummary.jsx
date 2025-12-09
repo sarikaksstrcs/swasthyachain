@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { Brain, Activity, Pill, User } from 'lucide-react';
-import { Button } from '@/components/common/Button';
-import { Card } from '@/components/common/Card';
-import { useAuth } from '@/hooks/useAuth';
-import toast from 'react-hot-toast';
-import { aiService } from '@/services/ai.service';
+import { useState } from "react";
+import { Brain, Activity, Pill, User } from "lucide-react";
+import { Button } from "@/components/common/Button";
+import { Card } from "@/components/common/Card";
+import { useAuth } from "@/hooks/useAuth";
+import toast from "react-hot-toast";
+import { aiService } from "@/services/ai.service";
 
 export const HealthSummary = ({ patientId = null, patientName = null }) => {
   const [summary, setSummary] = useState(null);
@@ -21,7 +21,7 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
       const data = await aiService.getHealthSummary(targetPatientId);
       setSummary(data);
     } catch (error) {
-      toast.error('Failed to generate health summary');
+      toast.error("Failed to generate health summary");
       console.error(error);
     } finally {
       setLoading(false);
@@ -33,7 +33,7 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
       {!summary ? (
         <div className="text-center py-8">
           <Brain className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-          
+
           {isViewingOtherPatient && patientName && (
             <div className="mb-4 inline-flex items-center px-4 py-2 bg-blue-50 rounded-lg">
               <User className="h-4 w-4 text-blue-600 mr-2" />
@@ -46,8 +46,7 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
           <p className="text-gray-600 mb-6">
             {isViewingOtherPatient
               ? `Generate an AI-powered summary of ${patientName}'s health records`
-              : 'Generate an AI-powered summary of your health records'
-            }
+              : "Generate an AI-powered summary of your health records"}
           </p>
 
           <Button onClick={fetchSummary} loading={loading}>
@@ -60,7 +59,9 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
             <div className="mb-6 p-4 bg-blue-50 rounded-lg flex items-center">
               <User className="h-5 w-5 text-blue-600 mr-2" />
               <div>
-                <p className="text-sm font-medium text-blue-900">Patient Summary</p>
+                <p className="text-sm font-medium text-blue-900">
+                  Patient Summary
+                </p>
                 <p className="text-sm text-blue-700">{patientName}</p>
               </div>
             </div>
@@ -135,7 +136,12 @@ export const HealthSummary = ({ patientId = null, patientName = null }) => {
             </div>
           )}
 
-          <Button onClick={fetchSummary} loading={loading} variant="secondary" className="w-full">
+          <Button
+            onClick={fetchSummary}
+            loading={loading}
+            variant="secondary"
+            className="w-full"
+          >
             Refresh Summary
           </Button>
         </div>

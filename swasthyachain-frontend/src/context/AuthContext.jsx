@@ -1,6 +1,6 @@
-import { createContext, useState, useEffect } from 'react';
-import { authService } from '@/services/auth.service';
-import toast from 'react-hot-toast';
+import { createContext, useState, useEffect } from "react";
+import { authService } from "@/services/auth.service";
+import toast from "react-hot-toast";
 
 export const AuthContext = createContext(null);
 
@@ -10,13 +10,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('access_token');
+      const token = localStorage.getItem("access_token");
       if (token) {
         try {
           const userData = await authService.getCurrentUser();
           setUser(userData);
         } catch (error) {
-          localStorage.removeItem('access_token');
+          localStorage.removeItem("access_token");
         }
       }
       setLoading(false);
@@ -29,10 +29,10 @@ export const AuthProvider = ({ children }) => {
       const data = await authService.login(credentials);
       const userData = await authService.getCurrentUser();
       setUser(userData);
-      toast.success('Login successful!');
+      toast.success("Login successful!");
       return userData;
     } catch (error) {
-      toast.error('Login failed. Please check your credentials.');
+      toast.error("Login failed. Please check your credentials.");
       throw error;
     }
   };
@@ -40,9 +40,9 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       await authService.register(userData);
-      toast.success('Registration successful! Please login.');
+      toast.success("Registration successful! Please login.");
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Registration failed');
+      toast.error(error.response?.data?.detail || "Registration failed");
       throw error;
     }
   };
@@ -50,7 +50,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     authService.logout();
     setUser(null);
-    toast.success('Logged out successfully');
+    toast.success("Logged out successfully");
   };
 
   const value = {

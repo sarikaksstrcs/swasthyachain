@@ -1,16 +1,15 @@
-import { useState } from 'react';
-import { Clock, Plus, Calendar } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { appointmentService } from '../../services/appoinment.service';
-
+import { useState } from "react";
+import { Clock, Plus, Calendar } from "lucide-react";
+import toast from "react-hot-toast";
+import { appointmentService } from "../../services/appoinment.service";
 
 export const DoctorAvailability = () => {
-  const [selectedDate, setSelectedDate] = useState('');
-  const [timeSlots, setTimeSlots] = useState([{ start: '', end: '' }]);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [timeSlots, setTimeSlots] = useState([{ start: "", end: "" }]);
   const [loading, setLoading] = useState(false);
 
   const addTimeSlot = () => {
-    setTimeSlots([...timeSlots, { start: '', end: '' }]);
+    setTimeSlots([...timeSlots, { start: "", end: "" }]);
   };
 
   const removeTimeSlot = (index) => {
@@ -25,32 +24,32 @@ export const DoctorAvailability = () => {
 
   const handleSubmit = async () => {
     if (!selectedDate) {
-      toast.error('Please select a date');
+      toast.error("Please select a date");
       return;
     }
 
-    const validSlots = timeSlots.filter(slot => slot.start && slot.end);
+    const validSlots = timeSlots.filter((slot) => slot.start && slot.end);
     if (validSlots.length === 0) {
-      toast.error('Please add at least one time slot');
+      toast.error("Please add at least one time slot");
       return;
     }
 
     setLoading(true);
     try {
-      const availabilityData = validSlots.map(slot => ({
+      const availabilityData = validSlots.map((slot) => ({
         date: selectedDate,
         start_time: slot.start,
         end_time: slot.end,
-        is_available: true
+        is_available: true,
       }));
 
       await appointmentService.createBulkAvailability(availabilityData);
-      
+
       toast.success(`${validSlots.length} time slot(s) added successfully`);
-      setSelectedDate('');
-      setTimeSlots([{ start: '', end: '' }]);
+      setSelectedDate("");
+      setTimeSlots([{ start: "", end: "" }]);
     } catch (error) {
-      toast.error('Failed to add availability');
+      toast.error("Failed to add availability");
       console.error(error);
     } finally {
       setLoading(false);
@@ -59,16 +58,16 @@ export const DoctorAvailability = () => {
 
   const generateBulkSlots = () => {
     if (!selectedDate) {
-      toast.error('Please select a date first');
+      toast.error("Please select a date first");
       return;
     }
 
     const slots = appointmentService.generateTimeSlots(9, 17, 30);
     setTimeSlots(slots);
-    toast.success('Generated standard working hours (9 AM - 5 PM)');
+    toast.success("Generated standard working hours (9 AM - 5 PM)");
   };
 
-  const minDate = new Date().toISOString().split('T')[0];
+  const minDate = new Date().toISOString().split("T")[0];
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -124,7 +123,10 @@ export const DoctorAvailability = () => {
 
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {timeSlots.map((slot, index) => (
-                <div key={index} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg"
+                >
                   <div className="flex-1 grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs text-gray-600 mb-1">
@@ -133,7 +135,9 @@ export const DoctorAvailability = () => {
                       <input
                         type="time"
                         value={slot.start}
-                        onChange={(e) => updateTimeSlot(index, 'start', e.target.value)}
+                        onChange={(e) =>
+                          updateTimeSlot(index, "start", e.target.value)
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         required
                       />
@@ -145,7 +149,9 @@ export const DoctorAvailability = () => {
                       <input
                         type="time"
                         value={slot.end}
-                        onChange={(e) => updateTimeSlot(index, 'end', e.target.value)}
+                        onChange={(e) =>
+                          updateTimeSlot(index, "end", e.target.value)
+                        }
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         required
                       />
@@ -189,7 +195,9 @@ export const DoctorAvailability = () => {
         <div className="mt-6 p-4 bg-blue-50 rounded-lg">
           <h3 className="font-semibold text-blue-900 mb-2">Tips:</h3>
           <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-            <li>Use "Generate Full Day" for quick setup of standard working hours</li>
+            <li>
+              Use "Generate Full Day" for quick setup of standard working hours
+            </li>
             <li>You can add multiple time slots for the same day</li>
             <li>Time slots should not overlap</li>
             <li>Patients can book available slots from their dashboard</li>

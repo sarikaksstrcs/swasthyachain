@@ -1,13 +1,13 @@
-import { X } from 'lucide-react';
+import { X } from "lucide-react";
 
-export const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
+export const Modal = ({ isOpen, onClose, title, children, size = "md" }) => {
   if (!isOpen) return null;
 
   const sizes = {
-    sm: 'max-w-md',
-    md: 'max-w-2xl',
-    lg: 'max-w-4xl',
-    xl: 'max-w-6xl',
+    sm: "max-w-md",
+    md: "max-w-2xl",
+    lg: "max-w-4xl",
+    xl: "max-w-6xl",
   };
 
   return (
@@ -21,12 +21,17 @@ export const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
         ></div>
 
         {/* Center alignment trick */}
-        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
+        <span
+          className="hidden sm:inline-block sm:align-middle sm:h-screen"
+          aria-hidden="true"
+        >
           &#8203;
         </span>
 
         {/* Modal panel */}
-        <div className={`relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full ${sizes[size]}`}>
+        <div
+          className={`relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle w-full ${sizes[size]}`}
+        >
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-white">
             <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
             <button

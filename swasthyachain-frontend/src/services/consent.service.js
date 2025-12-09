@@ -1,18 +1,18 @@
-import api from './api';
+import api from "./api";
 
 export const consentService = {
   requestConsent: async (data) => {
-    const response = await api.post('/consent/request', data);
+    const response = await api.post("/consent/request", data);
     return response.data;
   },
 
   getPendingConsents: async () => {
-    const response = await api.get('/consent/pending');
+    const response = await api.get("/consent/pending");
     return response.data;
   },
 
   getMyConsents: async () => {
-    const response = await api.get('/consent/my-consents');
+    const response = await api.get("/consent/my-consents");
     return response.data;
   },
 
@@ -32,5 +32,5 @@ export const consentService = {
   getPatientRecords: async (doctorId) => {
     const response = await api.get(`/consent/patient-records/${doctorId}`);
     return response.data;
-  }
+  },
 };

@@ -1,16 +1,15 @@
-import { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import { PatientList } from '../components/common/patientList';
-import { HealthSummary } from '../components/ai/HealthSummary';
-import { RiskPrediction } from '../components/ai/RiskPrediction';
-import { Recommendations } from '../components/ai/Recommendations';
-
+import { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
+import { PatientList } from "../components/common/patientList";
+import { HealthSummary } from "../components/ai/HealthSummary";
+import { RiskPrediction } from "../components/ai/RiskPrediction";
+import { Recommendations } from "../components/ai/Recommendations";
 
 export const AIInsights = () => {
   const { user } = useAuth();
   const [selectedPatient, setSelectedPatient] = useState(null);
 
-  const isDoctor = user?.role === 'doctor';
+  const isDoctor = user?.role === "doctor";
 
   const handleSelectPatient = (patient) => {
     setSelectedPatient(patient);
@@ -24,15 +23,16 @@ export const AIInsights = () => {
           AI Health Insights
         </h1>
         <p className="text-gray-600">
-          {isDoctor 
-            ? 'View AI-powered health insights for your patients'
-            : 'Get personalized health insights powered by artificial intelligence'
-          }
+          {isDoctor
+            ? "View AI-powered health insights for your patients"
+            : "Get personalized health insights powered by artificial intelligence"}
         </p>
       </div>
 
       {/* Main Content */}
-      <div className={`grid grid-cols-1 ${isDoctor ? 'lg:grid-cols-3' : ''} gap-6`}>
+      <div
+        className={`grid grid-cols-1 ${isDoctor ? "lg:grid-cols-3" : ""} gap-6`}
+      >
         {/* Patient List - Only for Doctors */}
         {isDoctor && (
           <div className="lg:col-span-1">
@@ -41,20 +41,20 @@ export const AIInsights = () => {
         )}
 
         {/* AI Insights */}
-        <div className={`${isDoctor ? 'lg:col-span-2' : ''} space-y-6`}>
+        <div className={`${isDoctor ? "lg:col-span-2" : ""} space-y-6`}>
           {/* Show insights only if patient is selected (for doctors) or always (for patients) */}
-          {(!isDoctor || selectedPatient) ? (
+          {!isDoctor || selectedPatient ? (
             <>
-              <HealthSummary 
+              <HealthSummary
                 patientId={isDoctor ? selectedPatient?.id : null}
                 patientName={isDoctor ? selectedPatient?.full_name : null}
               />
-              
-              <RiskPrediction 
+
+              <RiskPrediction
                 patientId={isDoctor ? selectedPatient?.id : null}
               />
-              
-              <Recommendations 
+
+              <Recommendations
                 patientId={isDoctor ? selectedPatient?.id : null}
               />
             </>

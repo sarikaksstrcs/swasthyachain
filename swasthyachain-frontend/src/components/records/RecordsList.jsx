@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { recordsService } from '@/services/records.service';
-import { RecordCard } from './RecordCard';
-import { Spinner } from '@/components/common/Spinner';
-import { Alert } from '@/components/common/Alert';
-import toast from 'react-hot-toast';
+import { useState, useEffect } from "react";
+import { recordsService } from "@/services/records.service";
+import { RecordCard } from "./RecordCard";
+import { Spinner } from "@/components/common/Spinner";
+import { Alert } from "@/components/common/Alert";
+import toast from "react-hot-toast";
 
 export const RecordsList = ({ onViewRecord, patientId = null }) => {
   const [records, setRecords] = useState([]);
@@ -17,17 +17,18 @@ export const RecordsList = ({ onViewRecord, patientId = null }) => {
   const fetchRecords = async () => {
     try {
       setLoading(true);
-      
+
       // If patientId is provided, fetch that patient's records (doctor view)
       // Otherwise fetch current user's records
-      const data = patientId 
+      const data = patientId
         ? await recordsService.getPatientRecords(patientId)
         : await recordsService.getMyRecords();
-      
+
       setRecords(data);
       setError(null);
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Failed to fetch medical records';
+      const errorMessage =
+        err.response?.data?.detail || "Failed to fetch medical records";
       setError(errorMessage);
       toast.error(errorMessage);
       console.error(err);
@@ -37,14 +38,15 @@ export const RecordsList = ({ onViewRecord, patientId = null }) => {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this record?')) return;
-    
+    if (!confirm("Are you sure you want to delete this record?")) return;
+
     try {
       await recordsService.deleteRecord(id);
-      setRecords(records.filter(r => r.id !== id));
-      toast.success('Record deleted successfully');
+      setRecords(records.filter((r) => r.id !== id));
+      toast.success("Record deleted successfully");
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Failed to delete record';
+      const errorMessage =
+        err.response?.data?.detail || "Failed to delete record";
       toast.error(errorMessage);
       console.error(err);
     }
@@ -58,15 +60,9 @@ export const RecordsList = ({ onViewRecord, patientId = null }) => {
       </div>
     );
   }
-  
+
   if (error) {
-    return (
-      <Alert 
-        type="error" 
-        title="Error Loading Records"
-        message={error} 
-      />
-    );
+    return <Alert type="error" title="Error Loading Records" message={error} />;
   }
 
   if (records.length === 0) {
@@ -75,7 +71,7 @@ export const RecordsList = ({ onViewRecord, patientId = null }) => {
         type="info"
         title="No Records Found"
         message={
-          patientId 
+          patientId
             ? "This patient doesn't have any medical records yet."
             : "You haven't uploaded any medical records yet. Click the upload button to add your first record."
         }

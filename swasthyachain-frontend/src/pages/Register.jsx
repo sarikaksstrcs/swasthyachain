@@ -1,6 +1,5 @@
-
-import { Activity } from 'lucide-react';
-import { RegisterForm } from '../components/auth/RegisterForm';
+import { Activity } from "lucide-react";
+import { RegisterForm } from "../components/auth/RegisterForm";
 
 export const Register = () => {
   return (

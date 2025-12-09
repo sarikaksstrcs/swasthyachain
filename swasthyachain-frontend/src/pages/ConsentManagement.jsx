@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { Plus } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { ROLES } from '../utils/constants';
-import { ConsentList } from '../components/consent/ConsentList';
-import { ConsentRequest } from '../components/consent/ConsentRequest';
-import { Modal } from '../components/common/Modal';
-import { Button } from '../components/common/Button';
+import { useState } from "react";
+import { Plus } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { ROLES } from "../utils/constants";
+import { ConsentList } from "../components/consent/ConsentList";
+import { ConsentRequest } from "../components/consent/ConsentRequest";
+import { Modal } from "../components/common/Modal";
+import { Button } from "../components/common/Button";
 
 export const ConsentManagement = () => {
   const [showRequest, setShowRequest] = useState(false);
@@ -22,15 +22,21 @@ export const ConsentManagement = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Consent Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Consent Management
+          </h1>
           <p className="text-gray-600 mt-2">
-            {isDoctor 
-              ? 'Request and manage patient consent for medical records'
-              : 'Manage who can access your medical records'}
+            {isDoctor
+              ? "Request and manage patient consent for medical records"
+              : "Manage who can access your medical records"}
           </p>
         </div>
         {isDoctor && (
-          <Button onClick={() => setShowRequest(true)} variant='blue' className='bg-blue-500'>
+          <Button
+            onClick={() => setShowRequest(true)}
+            variant="blue"
+            className="bg-blue-500"
+          >
             <Plus className="h-5 w-5" />
             Request Consent
           </Button>

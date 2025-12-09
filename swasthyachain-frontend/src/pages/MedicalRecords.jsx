@@ -1,12 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Plus, Search } from 'lucide-react';
-import { RecordsList } from '../components/records/RecordsList';
-import { Modal } from '../components/common/Modal';
-import { UploadRecord } from '../components/records/UploadRecord';
-import { Button } from '../components/common/Button';
-import { RecordDetails } from '../components/records/RecordDetails';
-import { PatientList } from '../components/common/patientList';
-
+import { useState, useEffect } from "react";
+import { Plus, Search } from "lucide-react";
+import { RecordsList } from "../components/records/RecordsList";
+import { Modal } from "../components/common/Modal";
+import { UploadRecord } from "../components/records/UploadRecord";
+import { Button } from "../components/common/Button";
+import { RecordDetails } from "../components/records/RecordDetails";
+import { PatientList } from "../components/common/patientList";
 
 export const MedicalRecords = () => {
   const [showUpload, setShowUpload] = useState(false);
@@ -16,10 +15,9 @@ export const MedicalRecords = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [viewingPatientRecords, setViewingPatientRecords] = useState(false);
 
-
   useEffect(() => {
     // Get user role from localStorage or context
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setUserRole(user.role);
   }, []);
@@ -44,7 +42,7 @@ export const MedicalRecords = () => {
     setShowUpload(true);
   };
 
-  const isDoctor = userRole === 'doctor';
+  const isDoctor = userRole === "doctor";
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -54,15 +52,15 @@ export const MedicalRecords = () => {
           <h1 className="text-3xl font-bold text-gray-900">
             {viewingPatientRecords && selectedPatient
               ? `${selectedPatient.full_name}'s Medical Records`
-              : 'Medical Records'}
+              : "Medical Records"}
           </h1>
           <p className="text-gray-600 mt-2">
             {viewingPatientRecords && selectedPatient
               ? `Viewing records for ${selectedPatient.email}`
-              : 'Manage your encrypted health records securely'}
+              : "Manage your encrypted health records securely"}
           </p>
         </div>
-        
+
         <div className="flex gap-3">
           {viewingPatientRecords && selectedPatient ? (
             <>
@@ -77,28 +75,35 @@ export const MedicalRecords = () => {
           ) : (
             <>
               {isDoctor && (
-                <Button variant="secondary" onClick={() => setShowPatientSearch(true)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowPatientSearch(true)}
+                >
                   <Search className="h-5 w-5" />
                   Find Patient
                 </Button>
               )}
               <Button onClick={() => setShowUpload(true)}>
                 <Plus className="h-5 w-5" />
-                {isDoctor ? 'Upload Record' : 'Upload Record'}
+                {isDoctor ? "Upload Record" : "Upload Record"}
               </Button>
             </>
           )}
         </div>
       </div>
-        {isDoctor && viewingPatientRecords && selectedPatient && (
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-800">
-                You are viewing and managing records for your patient: <strong>{selectedPatient.full_name} ({selectedPatient.email})</strong>.
-            </p>
-            </div>
-        )}
+      {isDoctor && viewingPatientRecords && selectedPatient && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-blue-800">
+            You are viewing and managing records for your patient:{" "}
+            <strong>
+              {selectedPatient.full_name} ({selectedPatient.email})
+            </strong>
+            .
+          </p>
+        </div>
+      )}
       {/* Records List */}
-      <RecordsList 
+      <RecordsList
         onViewRecord={setSelectedRecord}
         patientId={viewingPatientRecords ? selectedPatient?.id : null}
       />
@@ -110,7 +115,7 @@ export const MedicalRecords = () => {
         title={
           viewingPatientRecords && selectedPatient
             ? `Upload Record for ${selectedPatient.full_name}`
-            : 'Upload Medical Record'
+            : "Upload Medical Record"
         }
         size="lg"
       >
@@ -125,7 +130,7 @@ export const MedicalRecords = () => {
       <Modal
         isOpen={!!selectedRecord}
         onClose={() => setSelectedRecord(null)}
-        title={selectedRecord ? selectedRecord.title : 'Record Details'}
+        title={selectedRecord ? selectedRecord.title : "Record Details"}
         size="lg"
       >
         <RecordDetails

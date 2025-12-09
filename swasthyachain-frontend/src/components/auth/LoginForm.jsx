@@ -1,13 +1,13 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { Input } from '@/components/common/Input';
-import { Button } from '@/components/common/Button';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Mail, Lock } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { Input } from "@/components/common/Input";
+import { Button } from "@/components/common/Button";
 
 export const LoginForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -17,9 +17,9 @@ export const LoginForm = () => {
     setLoading(true);
     try {
       await login({ email, password });
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
     } finally {
       setLoading(false);
     }
@@ -36,7 +36,7 @@ export const LoginForm = () => {
         placeholder="your@email.com"
         required
       />
-      
+
       <Input
         label="Password"
         type="password"
@@ -52,8 +52,11 @@ export const LoginForm = () => {
       </Button>
 
       <p className="text-center text-sm text-gray-600">
-        Don't have an account?{' '}
-        <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">
+        Don't have an account?{" "}
+        <Link
+          to="/register"
+          className="text-blue-600 hover:text-blue-700 font-medium"
+        >
           Register here
         </Link>
       </p>

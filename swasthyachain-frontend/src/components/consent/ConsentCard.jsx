@@ -1,14 +1,20 @@
-import { Shield, Clock, CheckCircle, XCircle, User } from 'lucide-react';
-import { formatDateTime, getStatusBadgeColor } from '@/utils/helpers';
-import { Button } from '@/components/common/Button';
-import { ACCESS_TYPES } from '@/utils/constants';
+import { Shield, Clock, CheckCircle, XCircle, User } from "lucide-react";
+import { formatDateTime, getStatusBadgeColor } from "@/utils/helpers";
+import { Button } from "@/components/common/Button";
+import { ACCESS_TYPES } from "@/utils/constants";
 
-export const ConsentCard = ({ consent, onApprove, onDeny, onRevoke, isPatient }) => {
+export const ConsentCard = ({
+  consent,
+  onApprove,
+  onDeny,
+  onRevoke,
+  isPatient,
+}) => {
   const getAccessTypeLabel = (type) => {
     const labels = {
-      [ACCESS_TYPES.READ]: 'Read Only',
-      [ACCESS_TYPES.WRITE]: 'Write Access',
-      [ACCESS_TYPES.FULL]: 'Full Access',
+      [ACCESS_TYPES.READ]: "Read Only",
+      [ACCESS_TYPES.WRITE]: "Write Access",
+      [ACCESS_TYPES.FULL]: "Full Access",
     };
     return labels[type] || type;
   };
@@ -22,14 +28,16 @@ export const ConsentCard = ({ consent, onApprove, onDeny, onRevoke, isPatient })
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">
-              {isPatient ? 'Dr. ' + consent.doctor_name : consent.patient_name}
+              {isPatient ? "Dr. " + consent.doctor_name : consent.patient_name}
             </h3>
             <p className="text-sm text-gray-600">
               {getAccessTypeLabel(consent.access_type)}
             </p>
           </div>
         </div>
-        <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(consent.status)}`}>
+        <span
+          className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusBadgeColor(consent.status)}`}
+        >
           {consent.status}
         </span>
       </div>
@@ -52,7 +60,7 @@ export const ConsentCard = ({ consent, onApprove, onDeny, onRevoke, isPatient })
         )}
       </div>
 
-      {consent.status === 'pending' && isPatient && (
+      {consent.status === "pending" && isPatient && (
         <div className="flex gap-2">
           <Button
             size="sm"
@@ -75,7 +83,7 @@ export const ConsentCard = ({ consent, onApprove, onDeny, onRevoke, isPatient })
         </div>
       )}
 
-      {consent.status === 'approved' && isPatient && (
+      {consent.status === "approved" && isPatient && (
         <Button
           size="sm"
           variant="danger"

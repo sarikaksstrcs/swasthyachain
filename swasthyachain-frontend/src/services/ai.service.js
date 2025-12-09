@@ -1,6 +1,6 @@
 // services/ai.service.js
 
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = "/api/v1";
 
 class AIService {
   /**
@@ -9,17 +9,17 @@ class AIService {
    */
   async getHealthSummary(patientId) {
     const response = await fetch(`${API_BASE_URL}/ai/health-summary`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
       },
-      body: JSON.stringify({ patient_id: patientId })
+      body: JSON.stringify({ patient_id: patientId }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.detail || 'Failed to generate health summary');
+      throw new Error(error.detail || "Failed to generate health summary");
     }
 
     return response.json();
@@ -31,20 +31,20 @@ class AIService {
    */
   async predictRisks(patientId) {
     const response = await fetch(`${API_BASE_URL}/ai/predict`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         patient_id: patientId,
-        prediction_type: 'disease_risk'
-      })
+        prediction_type: "disease_risk",
+      }),
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.detail || 'Failed to generate risk prediction');
+      throw new Error(error.detail || "Failed to generate risk prediction");
     }
 
     return response.json();
@@ -56,19 +56,19 @@ class AIService {
    */
   async getRecommendations(patientId = null) {
     // If patientId provided, use the patient-specific endpoint
-    const endpoint = patientId 
+    const endpoint = patientId
       ? `${API_BASE_URL}/ai/recommendations/${patientId}`
       : `${API_BASE_URL}/ai/recommendations`;
 
     const response = await fetch(endpoint, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-      }
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
     });
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.detail || 'Failed to get recommendations');
+      throw new Error(error.detail || "Failed to get recommendations");
     }
 
     return response.json();

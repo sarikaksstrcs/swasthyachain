@@ -1,8 +1,7 @@
-import { User, Mail, Phone, Shield, Calendar } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { Card } from '../components/common/Card';
-import { formatDate } from '../utils/helpers';
-
+import { User, Mail, Phone, Shield, Calendar } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { Card } from "../components/common/Card";
+import { formatDate } from "../utils/helpers";
 
 export const Profile = () => {
   const { user } = useAuth();
@@ -18,7 +17,9 @@ export const Profile = () => {
               <User className="h-10 w-10 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">{user?.full_name}</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {user?.full_name}
+              </h2>
               <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full capitalize">
                 {user?.role}
               </span>
@@ -38,7 +39,7 @@ export const Profile = () => {
               <Phone className="h-5 w-5 text-gray-400" />
               <div>
                 <p className="text-sm text-gray-500">Phone</p>
-                <p className="font-medium">{user?.phone || 'Not provided'}</p>
+                <p className="font-medium">{user?.phone || "Not provided"}</p>
               </div>
             </div>
 
