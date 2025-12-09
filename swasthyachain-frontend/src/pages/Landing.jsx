@@ -261,7 +261,7 @@ export const Landing = () => {
             Join thousands of users who trust SwasthyaChain for secure, accessible healthcare records and seamless appointment scheduling
           </p>
           <Link to="/register">
-            <Button size="lg" variant="secondary">
+            <Button size="lg" variant="secondary" className="place-self-center">  
               Create Free Account
             </Button>
           </Link>
