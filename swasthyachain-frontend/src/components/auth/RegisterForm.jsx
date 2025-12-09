@@ -105,7 +105,7 @@ export const RegisterForm = () => {
         >
           <option value={ROLES.PATIENT}>Patient</option>
           <option value={ROLES.DOCTOR}>Doctor</option>
-          <option value={ROLES.HOSPITAL}>Hospital</option>
+          {/* <option value={ROLES.HOSPITAL}>Hospital</option> */}
         </select>
 
         {/* custom arrow */}
