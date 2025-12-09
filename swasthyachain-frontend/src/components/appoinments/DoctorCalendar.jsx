@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Clock, User, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { appointmentService } from '../../services/appoinment.service';
-import { isPast } from 'date-fns';
 
 
 export const DoctorCalendar = () => {
