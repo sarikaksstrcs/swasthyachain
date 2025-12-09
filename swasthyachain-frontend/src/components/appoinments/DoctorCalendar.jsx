@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, Clock, User, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { appointmentService } from '../../services/appoinment.service';
+import { isPast } from 'date-fns';
 
 
 export const DoctorCalendar = () => {
@@ -271,7 +272,7 @@ export const DoctorCalendar = () => {
                             </div>
                           )}
                           
-                          {appointment.status === 'confirmed' && (
+                          {appointment.status === 'confirmed' && new Date(new Date().toISOString().slice(0, 10) + 'T' + appointment.end_time) < new Date()&&(
                             <button
                               onClick={() => updateAppointmentStatus(appointment.id, 'completed')}
                               className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"

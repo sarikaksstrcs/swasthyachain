@@ -135,7 +135,7 @@ export const Dashboard = () => {
         {
           icon: FileText,
           label: 'Medical Records',
-          value: '12', // This would come from records API
+          value: recordCount.toString(), // This would come from records API
           color: 'bg-blue-100 text-blue-600',
           link: '/medical-records',
         },
@@ -163,7 +163,7 @@ export const Dashboard = () => {
       ]
     : [
         { title: 'Book Appointment', link: '/appointments', icon: Calendar },
-        { title: 'Upload Record', link: '/medical-records/upload', icon: FileText },
+        { title: 'Upload Record', link: '/medical-records', icon: FileText },
         { title: 'View AI Insights', link: '/ai-insights', icon: Brain },
       ];
 
@@ -271,7 +271,7 @@ export const Dashboard = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {upcomingAppointments.length === 0 || todayAppointments.length===0? (
+                {upcomingAppointments.length === 0 && todayAppointments.length===0? (
                   <div className="text-center py-8">
                     <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500 mb-4">No upcoming appointments</p>

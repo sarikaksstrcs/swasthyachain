@@ -125,7 +125,7 @@ export const MedicalRecords = () => {
       <Modal
         isOpen={!!selectedRecord}
         onClose={() => setSelectedRecord(null)}
-        title="Record Details"
+        title={selectedRecord ? selectedRecord.title : 'Record Details'}
         size="lg"
       >
         <RecordDetails
